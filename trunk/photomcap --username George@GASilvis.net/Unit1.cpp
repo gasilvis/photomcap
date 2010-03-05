@@ -197,7 +197,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              break;
           case 16: // label
              sprintf(ss, "S%03iLab =%21s /Label                                         ", Stars, T);
-//             Memo2->Lines->Append(ss);
+             Memo2->Lines->Append(ss);
              state= 17;
              Fs= 0;
              break;
@@ -283,4 +283,5 @@ void __fastcall TForm1::Help1Click(TObject *Sender)
       GroupBox1->Visible= true;
 }
 //---------------------------------------------------------------------------
+
 
