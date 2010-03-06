@@ -43,9 +43,9 @@ AnsiString SaveFile= "temp.txt";
 void __fastcall TForm1::Button1Click(TObject *Sender)
 {
     AnsiString as;
-    char  SName[64], SRA[32], SDec[32], ss[128], Filters[20];
-    int x, y, nextstate, state= 0, Stars, CDL;
-    unsigned int i, Fs;
+    char  SName[64], SRA[32], SDec[32], ss[128], Filters[20], suffix[3];
+    int x, y, nextstate, state= 0, CDL;
+    unsigned int i, j, Fs, Stars;
 
     // Clear output
     Memo2->Clear();
@@ -58,6 +58,8 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
 
     char *T, *M1= M0;
     char* delim= " \r\n";
+    char  Labels[64][8]; int LabelLine[64]; // to hold labels incase they need to
+    // be modified because they are dups.   12 12 will be changed to 12a 12b
 
     Memo2->Lines->Append("FILETYPE=             STARDATA /Star Data file                                ");
     Memo2->Lines->Append("NUMTARGS=                    1 /Number of targets                             ");
@@ -198,6 +200,8 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
           case 16: // label
              sprintf(ss, "S%03iLab =%21s /Label                                         ", Stars, T);
              Memo2->Lines->Append(ss);
+             strcpy(Labels[Stars], T);
+             LabelLine[Stars]= Memo2->Lines->Count- 1;
              state= 17;
              Fs= 0;
              break;
@@ -236,6 +240,24 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              }
              break;
           case 20:
+             // look for duplicate Labels and modify with letter suffix
+             for(i= 1; i<Stars; i++) { // don't need to do the last one
+                strcpy(suffix, "a");
+                for(j= i+1; j<=Stars; j++) {
+                   if(!strcmp(Labels[i], Labels[j])) {
+                      suffix[0]++;
+                      strcat(Labels[j], suffix);
+                      sprintf(ss, "S%03iLab =%21s /Label                                         ", j, Labels[j]);
+                      Memo2->Lines->Strings[LabelLine[j]]= ss;
+                   }
+                }
+                if(strcmp(suffix, "a")) { // go fix the first
+                   strcat(Labels[i], "a");
+                   sprintf(ss, "S%03iLab =%21s /Label                                         ", i, Labels[i]);
+                   Memo2->Lines->Strings[LabelLine[i]]= ss;
+                }
+             }
+
              sprintf(ss, "NUMSTARS=                  %3i /Number of comp or field stars                 ", Stars);
              Memo2->Lines->Strings[2]= ss;
              sprintf(ss, "CHARTDES=%21s /Chart designation                             ", T);
