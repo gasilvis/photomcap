@@ -16,6 +16,7 @@ object Form1: TForm1
   OldCreateOrder = False
   Scaled = False
   ShowHint = True
+  OnCreate = FormCreate
   PixelsPerInch = 120
   TextHeight = 22
   object Label1: TLabel
@@ -23,7 +24,7 @@ object Form1: TForm1
     Top = 0
     Width = 34
     Height = 22
-    Caption = 'Ver 3'
+    Caption = 'Ver 4'
   end
   object Label2: TLabel
     Left = 144
@@ -116,7 +117,7 @@ object Form1: TForm1
       Lines.Strings = (
         
           'This PhotomCap program is a utility to "capture" the AAVSO photo' +
-          'metry data from a web page and convert it '
+          'metry data from a web page and convert it'
         'into a AIPWin MMT Tool .STAR file.'
         ''
         'The process:'
@@ -151,7 +152,16 @@ object Form1: TForm1
         
           'If you have a particular capture that fails, send me the PhotomC' +
           'ap version number and the chartid. Thanks.'
-        '')
+        ''
+        ''
+        'Options:'
+        
+          '- Labels: The photometry tables have a column of Labels that app' +
+          'ear on the chart. With these you match up '
+        
+          'the labled star to the table data. Clicking this option will inc' +
+          'lude the label with the star ID. This works well in '
+        'MMT.')
       TabOrder = 0
     end
     object Button3: TButton
@@ -193,6 +203,14 @@ object Form1: TForm1
     object Help1: TMenuItem
       Caption = 'Help'
       OnClick = Help1Click
+    end
+    object Options1: TMenuItem
+      Caption = 'Options'
+      object Labels1: TMenuItem
+        Caption = 'Labels'
+        Hint = 'Add Labels to the StarID field'
+        OnClick = Labels1Click
+      end
     end
   end
 end
