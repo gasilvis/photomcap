@@ -40,10 +40,11 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 
 AnsiString SaveFile= "temp.txt";
 
+
 void __fastcall TForm1::Button1Click(TObject *Sender)
 {
     AnsiString as;
-    char  SName[64], SRA[32], SDec[32], ss[128], Filters[20], suffix[3];
+    char  SName[64], SRA[32], SDec[32], ss[128], ss2[32], Filters[20], suffix[3];
     int x, y, nextstate, state= 0, CDL;
     unsigned int i, j, Fs, Stars;
 
@@ -59,6 +60,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
     char *T, *M1= M0;
     char* delim= " \r\n";
     char  Labels[64][8]; int LabelLine[64]; // to hold labels incase they need to
+    char  AUIDs[64][24]; // capture the AUIDs
     // be modified because they are dups.   12 12 will be changed to 12a 12b
 
     Memo2->Lines->Append("FILETYPE=             STARDATA /Star Data file                                ");
@@ -165,6 +167,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              Memo2->Lines->Append(ss);
              sprintf(ss, "S%03iID  =%21s /Star identifier                               ", Stars, T);
              Memo2->Lines->Append(ss);
+             strcpy(AUIDs[Stars], T);
              state= 12;
              break;
           case 12: // get star RA
@@ -257,6 +260,14 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
                    Memo2->Lines->Strings[LabelLine[i]]= ss;
                 }
              }
+             // Label option
+             if(Labels1->Checked) {
+                for(i= 1; i<=Stars; i++) {
+                   sprintf(ss2, "%s %s", Labels[i], AUIDs[i]);
+                   sprintf(ss, "S%03iID  =%21s /Star identifier                               ", i, ss2);
+                   Memo2->Lines->Strings[LabelLine[i]- 3]= ss;
+                }
+             }
 
              sprintf(ss, "NUMSTARS=                  %3i /Number of comp or field stars                 ", Stars);
              Memo2->Lines->Strings[2]= ss;
@@ -278,20 +289,11 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Button2Click(TObject *Sender)
 {
-   TIniFile *ini;
-   ini = new TIniFile(ChangeFileExt( Application->ExeName, ".INI" ) );
-   SaveDialog1->InitialDir= ini->ReadString("Setup", "Dir", "");
-   delete ini;
-
    SaveDialog1->FileName= SaveFile;
    if(SaveDialog1->Execute()) {
       Memo2->Lines->SaveToFile(SaveDialog1->FileName);
    }
-   // Save the directory
-   ini = new TIniFile(ChangeFileExt( Application->ExeName, ".INI" ) );
-   ini->WriteString("Setup", "Dir", SaveDialog1->InitialDir);
-   delete ini;
-
+   PutIniData(Sender);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Button3Click(TObject *Sender)
@@ -305,5 +307,42 @@ void __fastcall TForm1::Help1Click(TObject *Sender)
       GroupBox1->Visible= true;
 }
 //---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::Labels1Click(TObject *Sender)
+{
+    Labels1->Checked= Labels1->Checked? false: true;
+    PutIniData(Sender);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::FormCreate(TObject *Sender)
+{
+   GetIniData(Sender);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::PutIniData(TObject *Sender)
+{
+   TIniFile *ini;
+   ini = new TIniFile(ChangeFileExt( Application->ExeName, ".INI" ) );
+
+   ini->WriteString("Setup", "Dir", SaveDialog1->InitialDir);
+   ini->WriteBool("Options", "Labels", Labels1->Checked);
+
+   delete ini;
+}
+
+
+void __fastcall TForm1::GetIniData(TObject *Sender)
+{
+   TIniFile *ini;
+   ini = new TIniFile(ChangeFileExt( Application->ExeName, ".INI" ) );
+
+   SaveDialog1->InitialDir= ini->ReadString("Setup", "Dir", "");
+   Labels1->Checked= ini->ReadBool("Options", "Labels", false);
+
+   delete ini;
+}
 
 
