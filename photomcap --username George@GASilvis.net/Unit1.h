@@ -31,12 +31,15 @@ __published:	// IDE-managed Components
    TButton *Button3;
    TMenuItem *Options1;
    TMenuItem *Labels1;
+   TMenuItem *CSV1;
+   TMemo *Memo4;
    void __fastcall Button1Click(TObject *Sender);
    void __fastcall Button2Click(TObject *Sender);
    void __fastcall Button3Click(TObject *Sender);
    void __fastcall Help1Click(TObject *Sender);
    void __fastcall Labels1Click(TObject *Sender);
    void __fastcall FormCreate(TObject *Sender);
+   void __fastcall CSV1Click(TObject *Sender);
 private:	// User declarations
    void __fastcall TForm1::PutIniData(TObject *Sender);
    void __fastcall TForm1::GetIniData(TObject *Sender);
