@@ -40,16 +40,18 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 
 AnsiString SaveFile= "temp.txt";
 
+#define Maxlines 128
 
 void __fastcall TForm1::Button1Click(TObject *Sender)
 {
     AnsiString as;
-    char  SName[64], SRA[32], SDec[32], ss[128], ss2[32], Filters[20], suffix[3];
+    char  SName[64], SRA[32], SDec[32], ss[128], ss2[32], Filters[20], suffix[3], cs[256];
     int x, y, nextstate, state= 0, CDL;
     unsigned int i, j, Fs, Stars;
 
     // Clear output
-    Memo2->Clear();
+    Memo2->Clear(); // AIP STAR fmt
+    Memo4->Clear(); // CSV generic
 
     Memo1->SelectAll();
     char *M0= Memo1->Lines->GetText();
@@ -59,8 +61,8 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
 
     char *T, *M1= M0;
     char* delim= " \r\n";
-    char  Labels[64][8]; int LabelLine[64]; // to hold labels incase they need to
-    char  AUIDs[64][24]; // capture the AUIDs
+    char  Labels[Maxlines][8]; int LabelLine[Maxlines]; // to hold labels incase they need to
+    char  AUIDs[Maxlines][24]; // capture the AUIDs
     // be modified because they are dups.   12 12 will be changed to 12a 12b
 
     Memo2->Lines->Append("FILETYPE=             STARDATA /Star Data file                                ");
@@ -148,6 +150,21 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
                 Memo2->Lines->Append(ss);
                 sprintf(ss, "T001DC  =%21s /Target DEC                                    ", SDec);
                 Memo2->Lines->Append(ss);
+
+                sprintf(cs, "\"Starname\",\"%s\"", SName);
+                Memo4->Lines->Append(cs);
+                sprintf(cs, "\"Star RA\",\"%s\"", SRA);
+                Memo4->Lines->Append(cs);
+                sprintf(cs, "\"Star DEC\",\"%s\"", SDec);
+                Memo4->Lines->Append(cs);
+                Memo4->Lines->Append(cs); // placeholder for chartid
+                sprintf(cs, "\"AUID\",\"RA\",\"Dec\",\"Label\"");
+                for(i= 1; i<=strlen(Filters); i++) {
+                   sprintf(ss2, ",\"%c\",", Filters[i-1]); // 2 cols: mag and err
+                   strcat(cs, ss2);
+                }
+                Memo4->Lines->Append(cs);
+
                 Stars= 0;
                 state= 11; // next token is the start of the first line
              }
@@ -159,7 +176,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              }
              if(11!=strlen(T)) // AUID's are always 11 long....  nope
                 break;
-             else if(!('-'==T[3] && '-'==T[7])) // still a hope and prayer
+             else if(!('-'==T[3] && '-'==T[7])) // They have two dashes; still a hope and prayer
                 break;
           case 11: // beginning of the data line
              Memo2->Lines->Append("--------=                      /                                              ");
@@ -168,6 +185,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              sprintf(ss, "S%03iID  =%21s /Star identifier                               ", Stars, T);
              Memo2->Lines->Append(ss);
              strcpy(AUIDs[Stars], T);
+             sprintf(cs, "\"%s\"", T);
              state= 12;
              break;
           case 12: // get star RA
@@ -183,6 +201,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              }
              sprintf(ss, "S%03iRA  =%21s /RA                                            ", Stars, SRA);
              Memo2->Lines->Append(ss);
+             sprintf(ss2, ",%s", SRA); strcat(cs, ss2);
              state= 14;
              break;
           case 14: // Get DEC
@@ -198,6 +217,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              }
              sprintf(ss, "S%03iDC  =%21s /DC                                            ", Stars, SDec);
              Memo2->Lines->Append(ss);
+             sprintf(ss2, ",%s", SRA); strcat(cs, ss2);
              state= 16;
              break;
           case 16: // label
@@ -205,16 +225,19 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              Memo2->Lines->Append(ss);
              strcpy(Labels[Stars], T);
              LabelLine[Stars]= Memo2->Lines->Count- 1;
+             sprintf(ss2, ",%s", T); strcat(cs, ss2);
              state= 17;
              Fs= 0;
              break;
-          case 17:
+          case 17: // filter with no data?
              if(0==strcmp(T, "-")) {
                 sprintf(ss, "S%03iF%02iM=%21s /standard magnitude                            ", Stars, ++Fs, "0.000");
                 Memo2->Lines->Append(ss);
                 sprintf(ss, "S%03iF%02iS=%21s /std dev                                       ", Stars, Fs, "0.000");
                 Memo2->Lines->Append(ss);
+                strcat(cs, ",,");
                 if(Fs== strlen(Filters)) { // we've finished the line
+                   Memo4->Lines->Append(cs);
                    state= 10;
                 } else {
                    state= 17;
@@ -222,6 +245,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              } else {
                 sprintf(ss, "S%03iF%02iM=%21s /standard magnitude                            ", Stars, ++Fs, T);
                 Memo2->Lines->Append(ss);
+                sprintf(ss2, ",%s", T); strcat(cs, ss2);
                 state= 18;
              }
              break;
@@ -231,7 +255,9 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              T[x]= 0;
              sprintf(ss, "S%03iF%02iS=%21s /std dev                                       ", Stars, Fs, T);
              Memo2->Lines->Append(ss);
+             sprintf(ss2, ",%s", T); strcat(cs, ss2);
              if(Fs== strlen(Filters)) { // we've finished the line
+                Memo4->Lines->Append(cs);
                 state= 10;
              } else {
                 state= 17;
@@ -273,8 +299,10 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              Memo2->Lines->Strings[2]= ss;
              sprintf(ss, "CHARTDES=%21s /Chart designation                             ", T);
              Memo2->Lines->Strings[CDL]= ss;
+             sprintf(cs, "\"ChartID\",\"%s\"", T);
+             Memo4->Lines->Strings[3]= cs;
              as= SName;
-             SaveFile= as + "+" + T + ".STAR";
+             SaveFile= as + "+" + T;// + ".STAR";
              state= 21;
              break;
        }
@@ -289,9 +317,15 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Button2Click(TObject *Sender)
 {
-   SaveDialog1->FileName= SaveFile;
+   AnsiString s;
+   if(CSV1->Checked) s= SaveFile+ ".CSV";
+   else              s= SaveFile+ ".STAR";
+   SaveDialog1->FileName= s;
    if(SaveDialog1->Execute()) {
-      Memo2->Lines->SaveToFile(SaveDialog1->FileName);
+      if(CSV1->Checked)
+         Memo4->Lines->SaveToFile(SaveDialog1->FileName);
+      else
+         Memo2->Lines->SaveToFile(SaveDialog1->FileName);
    }
    PutIniData(Sender);
 }
@@ -304,6 +338,7 @@ void __fastcall TForm1::Button3Click(TObject *Sender)
 
 void __fastcall TForm1::Help1Click(TObject *Sender)
 {
+      GroupBox1->BringToFront();
       GroupBox1->Visible= true;
 }
 //---------------------------------------------------------------------------
@@ -329,8 +364,10 @@ void __fastcall TForm1::PutIniData(TObject *Sender)
 
    ini->WriteString("Setup", "Dir", SaveDialog1->InitialDir);
    ini->WriteBool("Options", "Labels", Labels1->Checked);
+   ini->WriteBool("Options", "CSV", CSV1->Checked);
 
    delete ini;
+   GetIniData(Sender); // to handle any setup related to the ini values
 }
 
 
@@ -341,8 +378,24 @@ void __fastcall TForm1::GetIniData(TObject *Sender)
 
    SaveDialog1->InitialDir= ini->ReadString("Setup", "Dir", "");
    Labels1->Checked= ini->ReadBool("Options", "Labels", false);
-
+   CSV1->Checked= ini->ReadBool("Options", "CSV", false);
    delete ini;
+
+   // setup related to the ini's
+   if(CSV1->Checked) {
+      Memo4->BringToFront();
+      Label3->Caption= "Photometry data in csv format appears here ";
+   } else {
+      Memo4->SendToBack();
+      Label3->Caption= "AIPWin MMT STAR file appears here ";
+   }
 }
 
+
+void __fastcall TForm1::CSV1Click(TObject *Sender)
+{
+    CSV1->Checked= CSV1->Checked? false: true;
+    PutIniData(Sender);
+}
+//---------------------------------------------------------------------------
 
