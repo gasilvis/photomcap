@@ -249,10 +249,10 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
                 state= 18;
              }
              break;
-          case 18:
+          case 18: // get std dev
              strcpy(T, &T[1]); // kill lead (
-             x= strcspn(T, ")");
-             T[x]= 0;
+             x= strcspn(T, ")"); T[x]= 0; // kill trailing }
+             if(0==strcmp("N/A", T)) strcpy(T, "0.000");
              sprintf(ss, "S%03iF%02iS=%21s /std dev                                       ", Stars, Fs, T);
              Memo2->Lines->Append(ss);
              sprintf(ss2, ",%s", T); strcat(cs, ss2);
@@ -398,4 +398,5 @@ void __fastcall TForm1::CSV1Click(TObject *Sender)
     PutIniData(Sender);
 }
 //---------------------------------------------------------------------------
+
 
