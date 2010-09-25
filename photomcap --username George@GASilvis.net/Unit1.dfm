@@ -26,7 +26,7 @@ object Form1: TForm1
     Top = 0
     Width = 34
     Height = 22
-    Caption = 'Ver 6'
+    Caption = 'Ver 7'
   end
   object Label2: TLabel
     Left = 144
@@ -202,6 +202,15 @@ object Form1: TForm1
     TabOrder = 4
     OnClick = Button2Click
   end
+  object Button4: TButton
+    Left = 72
+    Top = 200
+    Width = 49
+    Height = 25
+    Caption = 'clear'
+    TabOrder = 7
+    OnClick = Button4Click
+  end
   object SaveDialog1: TSaveDialog
     Left = 880
     Top = 248
@@ -237,10 +246,12 @@ object Form1: TForm1
       object Labels1: TMenuItem
         Caption = 'Labels'
         Hint = 'Add Labels to the StarID field'
+        RadioItem = True
         OnClick = Labels1Click
       end
       object CSV1: TMenuItem
         Caption = 'CSV'
+        RadioItem = True
         OnClick = CSV1Click
       end
     end
