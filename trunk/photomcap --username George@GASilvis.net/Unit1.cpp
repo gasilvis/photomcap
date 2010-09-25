@@ -71,10 +71,13 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
     do {
        switch(state) {
           case 0: // find star name
-             if(0==strcmp(T, "For")) {
-                SName[0]= 0; // init
-                state= 1;
-             }
+             if(0==strcmp(T, "Photometry")) {
+                T= strtok(NULL, delim);
+                if(0==strcmp(T, "for")) {
+                   SName[0]= 0; // init
+                   state= 1;
+                }
+             }   
              break;
           case 1: // get end of name (it may have embedded blanks
              if(0==strcmp(T, "From")) {
@@ -399,4 +402,10 @@ void __fastcall TForm1::CSV1Click(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+
+void __fastcall TForm1::Button4Click(TObject *Sender)
+{
+    Memo1->Clear(); // input window
+}
+//---------------------------------------------------------------------------
 
