@@ -47,6 +47,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
     AnsiString as;
     char  SName[64], SRA[32], SDec[32], ss[128], ss2[32], Filters[20], suffix[3], cs[256];
     int x, y, nextstate, state= 0, CDL;
+    unsigned int BmVcol= 999, BmVcolTmp; // filter column labeled B-V; This needs to be skipped
     unsigned int i, j, Fs, Stars;
 
     // Clear output
@@ -125,14 +126,21 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              state= 8;
              break;
           case 8: // get filters
-             if(0==strcmp(T, "Label")) {
-                state= 9;
-                Filters[0]= 0;
+             if(0==strcmp(T, "Dec.")) {  // look for "Dec.   Label"
+                T= strtok(NULL, delim);
+                if(0==strcmp(T, "Label")) {
+                   state= 9;
+                   Filters[0]= 0;
+                }
              }
              break;
           case 9:
              if(strcmp(T, "Comments")) {
-                strncat(Filters, T, 1);
+                if(strcmp(T, "B-V")) {
+                   strncat(Filters, T, 1);  // grab first letter of filter name
+                } else {
+                   BmVcol= strlen(Filters);
+                }
              } else {
 //                strcpy(delim, " \r");
                 Memo2->Lines->Append("NUMSTARS=                    x /Number of comp or field stars                 "); // placeholder
@@ -231,9 +239,20 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
              sprintf(ss2, ",%s", T); strcat(cs, ss2);
              state= 17;
              Fs= 0;
+             BmVcolTmp= BmVcol;
              break;
-          case 17: // filter with no data?
-             if(0==strcmp(T, "-")) {
+          case 17:
+             if(Fs==BmVcolTmp) { // skip the B-V column
+                if(strcmp(T, "-")) {
+                   T= strtok(NULL, delim); // kill the std dev token too
+                }
+                BmVcolTmp= 999;
+                if(Fs== strlen(Filters)) { // we've finished the line
+                   state= 10;
+                }
+                break;
+             }
+             if(0==strcmp(T, "-")) { // filter with no data?
                 sprintf(ss, "S%03iF%02iM=%21s /standard magnitude                            ", Stars, ++Fs, "0.000");
                 Memo2->Lines->Append(ss);
                 sprintf(ss, "S%03iF%02iS=%21s /std dev                                       ", Stars, Fs, "0.000");
@@ -242,8 +261,6 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
                 if(Fs== strlen(Filters)) { // we've finished the line
                    Memo4->Lines->Append(cs);
                    state= 10;
-                } else {
-                   state= 17;
                 }
              } else {
                 sprintf(ss, "S%03iF%02iM=%21s /standard magnitude                            ", Stars, ++Fs, T);
