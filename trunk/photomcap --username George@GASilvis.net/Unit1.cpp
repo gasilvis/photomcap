@@ -143,7 +143,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
                 }
              } else {
 //                strcpy(delim, " \r");
-                Memo2->Lines->Append("NUMSTARS=                    x /Number of comp or field stars                 "); // placeholder
+                Memo2->Lines->Append("NUMSTARS=                    x /Number of comp or field stars                 "); // plac  eholder
                 sprintf(ss, "NUMFILTE=                   %2i /Number of filter bands                        ", strlen(Filters));
                 Memo2->Lines->Append(ss);
                 for(i= 1; i<= strlen(Filters); i++) {
@@ -155,7 +155,7 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
                 Memo2->Lines->Append("--------=                      /                                              ");
                 Memo2->Lines->Append("T001FN  =                    V /Target function                               ");
 
-                sprintf(ss, "T001ID  =%21s /Target identifier                             ", SName);
+                sprintf(ss, "T001ID  =%21.21s /Target identifier                             ", SName); // truncates long names
                 Memo2->Lines->Append(ss);
                 sprintf(ss, "T001RA  =%21s /Target RA                                     ", SRA);
                 Memo2->Lines->Append(ss);

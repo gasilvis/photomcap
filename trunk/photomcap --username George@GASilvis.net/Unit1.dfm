@@ -26,7 +26,7 @@ object Form1: TForm1
     Top = 0
     Width = 34
     Height = 22
-    Caption = 'Ver 8'
+    Caption = 'Ver 9'
   end
   object Label2: TLabel
     Left = 144
@@ -70,10 +70,10 @@ object Form1: TForm1
         'The process:'
         
           '1. Go to the AAVSO website and use VSP to select your star chart' +
-          ': http://www.aavso.org/observing/charts/vsp/'
+          ': http://www.aavso.org/vsp/chart'
         
-          '2. From the chart page click on "[Comparison Stars]" to bring up' +
-          ' the photometry data page.'
+          '2. From the chart page click on "Photometry Table for this Chart' +
+          '" to bring up the photometry data page.'
         
           '3. Click on the page and hit Ctrl-A to select all of the text da' +
           'ta.'
