@@ -155,7 +155,8 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
                 Memo2->Lines->Append("--------=                      /                                              ");
                 Memo2->Lines->Append("T001FN  =                    V /Target function                               ");
 
-                sprintf(ss, "T001ID  =%21.21s /Target identifier                             ", SName); // truncates long names
+                sprintf(ss, "T001ID  =%21s /Target identifier                             ", SName);
+                ss[78]= 0; // make sure its not too long
                 Memo2->Lines->Append(ss);
                 sprintf(ss, "T001RA  =%21s /Target RA                                     ", SRA);
                 Memo2->Lines->Append(ss);
