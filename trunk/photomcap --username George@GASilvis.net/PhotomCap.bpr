@@ -4,10 +4,10 @@
   <MACROS>
     <VERSION value="BCB.05.03"/>
     <PROJECT value="PhotomCap.exe"/>
-    <OBJFILES value="PhotomCap.obj Unit1.obj"/>
+    <OBJFILES value="PhotomCap.obj Unit1.obj aboutbox.obj"/>
     <RESFILES value="PhotomCap.res"/>
     <DEFFILE value=""/>
-    <RESDEPEN value="$(RESFILES) Unit1.dfm"/>
+    <RESDEPEN value="$(RESFILES) Unit1.dfm aboutbox.dfm"/>
     <LIBFILES value=""/>
     <LIBRARIES value="Vcl50.lib"/>
     <SPARELIBS value="Vcl50.lib"/>
