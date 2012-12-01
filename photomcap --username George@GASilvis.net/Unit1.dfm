@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 121
-  Top = 167
+  Left = 123
+  Top = 169
   Width = 979
   Height = 563
   HorzScrollBar.Visible = False
@@ -26,7 +26,7 @@ object Form1: TForm1
     Top = 0
     Width = 42
     Height = 22
-    Caption = 'Ver 10'
+    Caption = 'Ver 11'
   end
   object Label2: TLabel
     Left = 144
@@ -41,92 +41,6 @@ object Form1: TForm1
     Width = 239
     Height = 22
     Caption = 'AIPWin MMT STAR file appears here '
-  end
-  object GroupBox1: TGroupBox
-    Left = 144
-    Top = 0
-    Width = 713
-    Height = 473
-    Caption = 'PhotomCap Help'
-    TabOrder = 5
-    Visible = False
-    object Memo3: TMemo
-      Left = 8
-      Top = 24
-      Width = 697
-      Height = 409
-      Lines.Strings = (
-        
-          'This PhotomCap program is a utility to "capture" the AAVSO photo' +
-          'metry data from the comparison star data '
-        
-          'page of their chart pages. The data is then made available as a ' +
-          'CSV file that can be imported to a '
-        
-          'spreadsheet, or as a .STAR file compatible with the new Magnitud' +
-          'e Measurment Tool (MMT) feature of '
-        'AIPWin.'
-        ''
-        'The process:'
-        
-          '1. Go to the AAVSO website and use VSP to select your star chart' +
-          ': http://www.aavso.org/vsp/chart'
-        
-          '2. From the chart page click on "Photometry Table for this Chart' +
-          '" to bring up the photometry data page.'
-        
-          '3. Click on the page and hit Ctrl-A to select all of the text da' +
-          'ta.'
-        '4. Hit Ctrl-C to copy that data.'
-        
-          '5. Now go to PhotomCap and click on the upper window. Hit Ctrl-V' +
-          ' to copy in the raw data.'
-        
-          '6. Now click the "Do it!" button. The lower window will now hold' +
-          ' either your CSV file or .STAR file, depending '
-        'upon which option you choose.'
-        
-          '7. Click the "Save it" button and save the .STAR file in the AIP' +
-          'Win/Data directory or the CSV file where ever.'
-        
-          '8. Now from Stars tab of the AIPWin MMT you can hit recall and o' +
-          'pen this file.'
-        'Voila! Comparison star data loaded, complete and accurate.'
-        ''
-        
-          'Any questions or problems, please contact me, George Silvis, at ' +
-          'George@GASilvis.net'
-        ''
-        
-          'If you have a particular capture that fails, send me the PhotomC' +
-          'ap version number and the chartid. I'#39'll sort it '
-        'out. Thanks.'
-        ''
-        ''
-        'Options:'
-        
-          '- Labels: The photometry tables have a column of Labels that app' +
-          'ear on the chart. With these you match up '
-        
-          'the labled star to the table data. Clicking this option will inc' +
-          'lude the label with the star ID in the STAR format. '
-        'This works well in MMT.'
-        ''
-        
-          '- CSV: Capture the data to a standard CSV format suitable for a ' +
-          'spreadsheet'
-        ' ')
-      TabOrder = 0
-    end
-    object Button3: TButton
-      Left = 296
-      Top = 440
-      Width = 75
-      Height = 25
-      Caption = 'Close'
-      TabOrder = 1
-      OnClick = Button3Click
-    end
   end
   object Memo2: TMemo
     Left = 128
@@ -169,9 +83,9 @@ object Form1: TForm1
     Font.Name = 'Courier New'
     Font.Style = []
     ParentFont = False
-    TabOrder = 6
+    TabOrder = 5
   end
-  object Button1: TButton
+  object DoitButton: TButton
     Left = 24
     Top = 120
     Width = 75
@@ -179,7 +93,7 @@ object Form1: TForm1
     Hint = 'Click to convert to STAR format'
     Caption = 'Do It!'
     TabOrder = 2
-    OnClick = Button1Click
+    OnClick = DoitButtonClick
   end
   object DDCheckBox: TCheckBox
     Left = 584
@@ -208,12 +122,23 @@ object Form1: TForm1
     Width = 49
     Height = 25
     Caption = 'clear'
-    TabOrder = 7
+    TabOrder = 6
     OnClick = Button4Click
   end
+  object SPaltError: TCheckBox
+    Left = 208
+    Top = 488
+    Width = 305
+    Height = 17
+    Hint = 'See help file'
+    Caption = 'Alternate error computation'
+    TabOrder = 7
+    Visible = False
+    OnClick = SPaltErrorClick
+  end
   object SaveDialog1: TSaveDialog
-    Left = 880
-    Top = 248
+    Left = 56
+    Top = 376
   end
   object ElasticForm1: TElasticForm
     DesignScreenWidth = 1448
@@ -223,23 +148,38 @@ object Form1: TForm1
     DesignFormHeight = 563
     DesignFormClientWidth = 971
     DesignFormClientHeight = 507
-    DesignFormLeft = 121
-    DesignFormTop = 167
+    DesignFormLeft = 123
+    DesignFormTop = 169
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -17
     Font.Name = 'Arial Narrow'
     Font.Style = []
     Version = 700
-    Left = 896
-    Top = 192
+    Left = 80
+    Top = 16
   end
   object MainMenu1: TMainMenu
-    Left = 64
-    Top = 48
-    object Help1: TMenuItem
-      Caption = 'Help'
-      OnClick = Help1Click
+    Left = 32
+    Top = 16
+    object File1: TMenuItem
+      Caption = 'File'
+      object LoadSourceFile1: TMenuItem
+        Caption = 'Load Source File'
+        OnClick = LoadSourceFile1Click
+      end
+      object SaveSourceFile1: TMenuItem
+        Caption = 'Save Source File'
+        OnClick = SaveSourceFile1Click
+      end
+      object SaveResultFile1: TMenuItem
+        Caption = '&Save Result File'
+        OnClick = SaveResultFile1Click
+      end
+      object Exit1: TMenuItem
+        Caption = 'E&xit'
+        OnClick = Exit1Click
+      end
     end
     object Options1: TMenuItem
       Caption = 'Options'
@@ -254,6 +194,29 @@ object Form1: TForm1
         RadioItem = True
         OnClick = CSV1Click
       end
+      object SeqPlot1: TMenuItem
+        Caption = 'SeqPlot'
+        OnClick = SeqPlot1Click
+      end
     end
+    object Help1: TMenuItem
+      Caption = 'Help'
+      object Help2: TMenuItem
+        Caption = 'Help'
+        OnClick = Help1Click
+      end
+      object About1: TMenuItem
+        Caption = 'About'
+        OnClick = About1Click
+      end
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 16
+    Top = 160
+  end
+  object SaveDialog2: TSaveDialog
+    Left = 64
+    Top = 160
   end
 end
