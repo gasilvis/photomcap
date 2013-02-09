@@ -26,7 +26,7 @@ object Form1: TForm1
     Top = 0
     Width = 42
     Height = 22
-    Caption = 'Ver 11'
+    Caption = 'Ver 12'
   end
   object Label2: TLabel
     Left = 144
@@ -147,7 +147,7 @@ object Form1: TForm1
     DesignFormWidth = 979
     DesignFormHeight = 563
     DesignFormClientWidth = 971
-    DesignFormClientHeight = 507
+    DesignFormClientHeight = 505
     DesignFormLeft = 123
     DesignFormTop = 169
     Font.Charset = ANSI_CHARSET
