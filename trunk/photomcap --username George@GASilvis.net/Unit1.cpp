@@ -268,7 +268,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
                    state= 10;
                 }
              } else {
-                sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                            ", Stars, Fs, T, Filters[Fs-1]);
+                sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                          ", Stars, Fs, T, Filters[Fs-1]);
                 Memo2->Lines->Append(ss);
                 sprintf(ss2, ",%s", T); strcat(cs, ss2);
                 state= 18;
@@ -278,7 +278,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              strcpy(T, &T[1]); // kill lead (
              x= strcspn(T, ")"); T[x]= 0; // kill trailing }
              if(0==strcmp("N/A", T)) strcpy(T, "0.000");
-             sprintf(ss, "S%03iF%02iS=%21s /%c std dev                                       ", Stars, Fs, T, Filters[Fs-1]);
+             sprintf(ss, "S%03iF%02iS=%21s /%c std dev                                     ", Stars, Fs, T, Filters[Fs-1]);
              Memo2->Lines->Append(ss);
              sprintf(ss2, ",%s", T); strcat(cs, ss2);
              if(Fs== strlen(Filters)) { // we've finished the line
