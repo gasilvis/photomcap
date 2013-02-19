@@ -12,7 +12,7 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
    {
        Application->Initialize();
        Application->Title = "PhotomCap";
-       Application->HelpFile = "C:\\projects\\astro\\PhotomCap\\PHOTOMCAP.HLP";
+       Application->HelpFile = "PHOTOMCAP.HLP";
        Application->CreateForm(__classid(TForm1), &Form1);
        Application->CreateForm(__classid(TfAbout), &fAbout);
        Application->Run();
