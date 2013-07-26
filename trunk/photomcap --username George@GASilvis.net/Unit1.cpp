@@ -39,16 +39,41 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 {
 }
 //---------------------------------------------------------------------------
+#define MaxFilters 20
+#define MaxComps 50
+typedef struct {
+   char mag[16];
+   char sd[16];
+} filterData;
+
+typedef struct {
+   char AUID[20];
+   char RA[32];
+   char Dec[32];
+   char Label[16];
+   filterData f[MaxFilters];
+} compData;
+
+typedef struct {
+   char SName[80];
+   char SRA[32];
+   char SDec[32];
+   char Filters[MaxFilters];
+   char Chart[16];
+   int  NumStars;
+   compData comp[MaxComps];
+} pdata;
+
+pdata pd;
 
 AnsiString SaveFile= "temp";
 AnsiString SourceFile= "";
 
-#define Maxlines 128
 
 void __fastcall TForm1::DoAAVSO(TObject *Sender)
 {
     AnsiString as;
-    char  SName[64], SRA[32], SDec[32], ss[128], ss2[32], Filters[20], suffix[3], cs[256];
+    char  ss[128], ss2[32], suffix[3], cs[256];//, SName[64], SRA[32], SDec[32], Filters[MaxFilters];
     int x, y, nextstate, state= 0, CDL;
     unsigned int BmVcol= 999, BmVcolTmp; // filter column labeled B-V; This needs to be skipped
     unsigned int i, j, Fs, Stars;
@@ -65,8 +90,9 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
 
     char *T, *M1= M0;
     char* delim= " \r\n";
-    char  Labels[Maxlines][8]; int LabelLine[Maxlines]; // to hold labels incase they need to
-    char  AUIDs[Maxlines][24]; // capture the AUIDs
+    //char  Labels[MaxComps][8];
+    int LabelLine[MaxComps]; // to hold labels incase they need to
+    //char  AUIDs[MaxComps][24]; // capture the AUIDs
     // be modified because they are dups.   12 12 will be changed to 12a 12b
 
     Memo2->Lines->Append("FILETYPE=             STARDATA /Star Data file                                ");
@@ -78,18 +104,18 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              if(0==strcmp(T, "Photometry")) {
                 T= strtok(NULL, delim);
                 if(0==strcmp(T, "for")) {
-                   SName[0]= 0; // init
+                   pd.SName[0]= 0; // init
                    state= 1;
                 }
              }
              break;
           case 1: // get end of name (it may have embedded blanks
              if(0==strcmp(T, "From")) {
-                strcpy(SName, &SName[1]); // trim leading blank
-                for(i= 0; i<strlen(SName); i++) SName[i]= toupper(SName[i]);
+                strcpy(pd.SName, &pd.SName[1]); // trim leading blank
+                for(i= 0; i<strlen(pd.SName); i++) pd.SName[i]= toupper(pd.SName[i]);
                 state= 2;
              } else {
-                strcat(SName, " "); strcat(SName, T); // build name
+                strcat(pd.SName, " "); strcat(pd.SName, T); // build name
              }
              break;
           case 2: // find RA of star
@@ -98,15 +124,15 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              }
              break;
           case 3: // Get angle
-             strcpy(SRA, T);
+             strcpy(pd.SRA, T);
              state= 4;
              break;
           case 4: //
              if(DDCheckBox->Checked) {
-                strcpy(SRA, T);
-                strcpy(SRA, &SRA[1]); // kill lead (
-                while(!isdigit(SRA[strlen(SRA)-1]))
-                   SRA[strlen(SRA)-1]= 0;
+                strcpy(T, &T[1]); // kill lead (
+                while(!isdigit(T[strlen(T)-1]))
+                   T[strlen(T)-1]= 0;
+                strcpy(pd.SRA, T);
              }
              state= 5;
              break;
@@ -116,15 +142,15 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              }
              break;
           case 6: // Get DEC
-             strcpy(SDec, T);
+             strcpy(pd.SDec, T);
              state= 7;
              break;
           case 7: //
              if(DDCheckBox->Checked) {
-                strcpy(SDec, T);
-                strcpy(SDec, &SDec[1]); // kill lead (
-                while(!isdigit(SDec[strlen(SDec)-1]))
-                   SDec[strlen(SDec)-1]= 0;
+                strcpy(T, &T[1]); // kill lead (
+                while(!isdigit(T[strlen(T)-1]))
+                   T[strlen(T)-1]= 0;
+                strcpy(pd.SDec, T);
              }
              state= 8;
              break;
@@ -133,24 +159,25 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
                 T= strtok(NULL, delim);
                 if(0==strcmp(T, "Label")) {
                    state= 9;
-                   Filters[0]= 0;
+                   pd.Filters[0]= 0;
                 }
              }
              break;
           case 9:
              if(strcmp(T, "Comments")) {
                 if(strcmp(T, "B-V")) {
-                   strncat(Filters, T, 1);  // grab first letter of filter name
+                   strncat(pd.Filters, T, 1);  // grab first letter of filter name
                 } else {
-                   BmVcol= strlen(Filters);
+                   BmVcol= strlen(pd.Filters);
                 }
              } else {
 //                strcpy(delim, " \r");
+
                 Memo2->Lines->Append("NUMSTARS=                    x /Number of comp or field stars                 "); // plac  eholder
-                sprintf(ss, "NUMFILTE=                   %2i /Number of filter bands                        ", strlen(Filters));
+                sprintf(ss, "NUMFILTE=                   %2i /Number of filter bands                        ", strlen(pd.Filters));
                 Memo2->Lines->Append(ss);
-                for(i= 1; i<= strlen(Filters); i++) {
-                   sprintf(ss, "FILTER%02i=                    %c /Designation of filter band                    ", i, Filters[i-1]);
+                for(i= 1; i<= strlen(pd.Filters); i++) {
+                   sprintf(ss, "FILTER%02i=                    %c /Designation of filter band                    ", i, pd.Filters[i-1]);
                    Memo2->Lines->Append(ss);
                 }
                 Memo2->Lines->Append("CHARTDES=              xxxxxxx /Chart designation                             "); // placeholder
@@ -158,29 +185,29 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
                 Memo2->Lines->Append("--------=                      /                                              ");
                 Memo2->Lines->Append("T001FN  =                    V /Target function                               ");
 
-                sprintf(ss, "T001ID  =%21s /Target identifier                             ", SName);
+                sprintf(ss, "T001ID  =%21s /Target identifier                             ", pd.SName);
                 ss[78]= 0; // make sure its not too long
                 Memo2->Lines->Append(ss);
-                sprintf(ss, "T001RA  =%21s /Target RA                                     ", SRA);
+                sprintf(ss, "T001RA  =%21s /Target RA                                     ", pd.SRA);
                 Memo2->Lines->Append(ss);
-                sprintf(ss, "T001DC  =%21s /Target DEC                                    ", SDec);
+                sprintf(ss, "T001DC  =%21s /Target DEC                                    ", pd.SDec);
                 Memo2->Lines->Append(ss);
 
-                sprintf(cs, "\"Starname\",\"%s\"", SName);
+                sprintf(cs, "\"Starname\",\"%s\"", pd.SName);
                 Memo4->Lines->Append(cs);
-                sprintf(cs, "\"Star RA\",\"%s\"", SRA);
+                sprintf(cs, "\"Star RA\",\"%s\"", pd.SRA);
                 Memo4->Lines->Append(cs);
-                sprintf(cs, "\"Star DEC\",\"%s\"", SDec);
+                sprintf(cs, "\"Star DEC\",\"%s\"", pd.SDec);
                 Memo4->Lines->Append(cs);
                 Memo4->Lines->Append(cs); // placeholder for chartid
                 sprintf(cs, "\"AUID\",\"RA\",\"Dec\",\"Label\"");
-                for(i= 1; i<=strlen(Filters); i++) {
-                   sprintf(ss2, ",\"%c\",", Filters[i-1]); // 2 cols: mag and err
+                for(i= 1; i<=strlen(pd.Filters); i++) {
+                   sprintf(ss2, ",\"%c\",", pd.Filters[i-1]); // 2 cols: mag and err
                    strcat(cs, ss2);
                 }
                 Memo4->Lines->Append(cs);
 
-                Stars= 0;
+                Stars= -1;
                 state= 11; // next token is the start of the first line
              }
              break;
@@ -194,83 +221,87 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              else if(!('-'==T[3] && '-'==T[7])) // They have two dashes; still a hope and prayer
                 break;
           case 11: // beginning of the data line
+             Stars++; // base 0
              Memo2->Lines->Append("--------=                      /                                              ");
-             sprintf(ss, "S%03iFN  =                    C /Star function                                 ", ++Stars);
+             sprintf(ss, "S%03iFN  =                    C /Star function                                 ", Stars+1);
              Memo2->Lines->Append(ss);
-             sprintf(ss, "S%03iID  =%21s /Star identifier                               ", Stars, T);
+             strcpy(pd.comp[Stars].AUID, T);
+             sprintf(ss, "S%03iID  =%21s /Star identifier                               ", Stars+1, pd.comp[Stars].AUID);
              Memo2->Lines->Append(ss);
-             strcpy(AUIDs[Stars], T);
              sprintf(cs, "\"%s\"", T);
              state= 12;
              break;
           case 12: // get star RA
-             strcpy(SRA, T);
+             strcpy(pd.comp[Stars].RA, T);
              state= 13;
              break;
           case 13: //
              if(DDCheckBox->Checked) {
-                strcpy(SRA, T);
-                strcpy(SRA, &SRA[1]); // kill lead (
-                while(!isdigit(SRA[strlen(SRA)-1]))
-                   SRA[strlen(SRA)-1]= 0;
+                strcpy(T, &T[1]); // kill lead (
+                while(!isdigit(T[strlen(T)-1]))
+                   T[strlen(T)-1]= 0;
+                strcpy(pd.comp[Stars].RA, T);
              }
-             sprintf(ss, "S%03iRA  =%21s /RA                                            ", Stars, SRA);
+             sprintf(ss, "S%03iRA  =%21s /RA                                            ", Stars+1, pd.comp[Stars].RA);
              Memo2->Lines->Append(ss);
-             sprintf(ss2, ",%s", SRA); strcat(cs, ss2);
+             sprintf(ss2, ",%s", pd.comp[Stars].RA); strcat(cs, ss2);
              state= 14;
              break;
           case 14: // Get DEC
-             strcpy(SDec, T);
+             strcpy(pd.comp[Stars].Dec, T);
              state= 15;
              break;
           case 15: //
              if(DDCheckBox->Checked) {
-                strcpy(SDec, T);
-                strcpy(SDec, &SDec[1]); // kill lead (
-                while(!isdigit(SDec[strlen(SDec)-1]))
-                   SDec[strlen(SDec)-1]= 0;
+                strcpy(T, &T[1]); // kill lead (
+                while(!isdigit(T[strlen(T)-1]))
+                   T[strlen(T)-1]= 0;
+                strcpy(pd.comp[Stars].Dec, T);
              }
-             sprintf(ss, "S%03iDC  =%21s /DC                                            ", Stars, SDec);
+             sprintf(ss, "S%03iDC  =%21s /DC                                            ", Stars+1, pd.comp[Stars].Dec);
              Memo2->Lines->Append(ss);
-             sprintf(ss2, ",%s", SDec); strcat(cs, ss2);
+             sprintf(ss2, ",%s", pd.comp[Stars].Dec); strcat(cs, ss2);
              state= 16;
              break;
           case 16: // label
-             sprintf(ss, "S%03iLab =%21s /Label                                         ", Stars, T);
+             strcpy(pd.comp[Stars].Label, T);
+             sprintf(ss, "S%03iLab =%21s /Label                                         ", Stars+1, pd.comp[Stars].Label);
              Memo2->Lines->Append(ss);
-             strcpy(Labels[Stars], T);
              LabelLine[Stars]= Memo2->Lines->Count- 1;
              sprintf(ss2, ",%s", T); strcat(cs, ss2);
              state= 17;
-             Fs= 0;
+             Fs= -1;
              BmVcolTmp= BmVcol;
              break;
           case 17:
-             if(Fs==BmVcolTmp) { // skip the B-V column
+             if((Fs+1)==BmVcolTmp) { // skip the B-V column
                 if(strcmp(T, "-")) {
                    T= strtok(NULL, delim); // kill the std dev token too
                 }
                 BmVcolTmp= 999;
-                if(Fs== strlen(Filters)) { // we've finished the line
+                if(Fs== strlen(pd.Filters)) { // we've finished the line
                    state= 10;
                 }
                 break;
              }
              Fs++;
              if(0==strcmp(T, "-")) { // filter with no data?
-                sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                          ", Stars, Fs, "0.000", Filters[Fs-1]);
+                strcpy(pd.comp[Stars].f[Fs].mag, "0.000");
+                sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                          ", Stars+1, Fs+1, pd.comp[Stars].f[Fs].mag, pd.Filters[Fs]);
                 Memo2->Lines->Append(ss);
-                sprintf(ss, "S%03iF%02iS=%21s /%c std dev                                     ", Stars, Fs, "0.000", Filters[Fs-1]);
+                strcpy(pd.comp[Stars].f[Fs].sd, "0.000");
+                sprintf(ss, "S%03iF%02iS=%21s /%c std dev                                     ", Stars+1, Fs+1, pd.comp[Stars].f[Fs].sd, pd.Filters[Fs]);
                 Memo2->Lines->Append(ss);
                 strcat(cs, ",,");
-                if(Fs== strlen(Filters)) { // we've finished the line
+                if((Fs+1)== strlen(pd.Filters)) { // we've finished the line
                    Memo4->Lines->Append(cs);
                    state= 10;
                 }
              } else {
-                sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                          ", Stars, Fs, T, Filters[Fs-1]);
+                strcpy(pd.comp[Stars].f[Fs].mag, T);
+                sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                          ", Stars+1, Fs+1, pd.comp[Stars].f[Fs].mag, pd.Filters[Fs]);
                 Memo2->Lines->Append(ss);
-                sprintf(ss2, ",%s", T); strcat(cs, ss2);
+                sprintf(ss2, ",%s", pd.comp[Stars].f[Fs].mag); strcat(cs, ss2);
                 state= 18;
              }
              break;
@@ -278,10 +309,11 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              strcpy(T, &T[1]); // kill lead (
              x= strcspn(T, ")"); T[x]= 0; // kill trailing }
              if(0==strcmp("N/A", T)) strcpy(T, "0.000");
-             sprintf(ss, "S%03iF%02iS=%21s /%c std dev                                     ", Stars, Fs, T, Filters[Fs-1]);
+             strcpy(pd.comp[Stars].f[Fs].sd, T);
+             sprintf(ss, "S%03iF%02iS=%21s /%c std dev                                     ", Stars+1, Fs+1, pd.comp[Stars].f[Fs].sd, pd.Filters[Fs]);
              Memo2->Lines->Append(ss);
-             sprintf(ss2, ",%s", T); strcat(cs, ss2);
-             if(Fs== strlen(Filters)) { // we've finished the line
+             sprintf(ss2, ",%s", pd.comp[Stars].f[Fs].sd); strcat(cs, ss2);
+             if((Fs+1)== strlen(pd.Filters)) { // we've finished the line
                 Memo4->Lines->Append(cs);
                 state= 10;
              } else {
@@ -294,39 +326,45 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              }
              break;
           case 20:
+             //  Stars is index of the last comp star
              // look for duplicate Labels and modify with letter suffix
-             for(i= 1; i<Stars; i++) { // don't need to do the last one
+             for(i= 0; i<Stars; i++) { // don't need to do the last one
                 strcpy(suffix, "a");
                 for(j= i+1; j<=Stars; j++) {
-                   if(!strcmp(Labels[i], Labels[j])) {
+                   if(!strcmp(pd.comp[i].Label, pd.comp[j].Label)) {
                       suffix[0]++;
-                      strcat(Labels[j], suffix);
-                      sprintf(ss, "S%03iLab =%21s /Label                                         ", j, Labels[j]);
+                      strcat(pd.comp[j].Label, suffix);
+                      sprintf(ss, "S%03iLab =%21s /Label                                         ", j+1, pd.comp[j].Label);
                       Memo2->Lines->Strings[LabelLine[j]]= ss;
                    }
                 }
                 if(strcmp(suffix, "a")) { // go fix the first
-                   strcat(Labels[i], "a");
-                   sprintf(ss, "S%03iLab =%21s /Label                                         ", i, Labels[i]);
+                   strcat(pd.comp[i].Label, "a");
+                   sprintf(ss, "S%03iLab =%21s /Label                                         ", i+1, pd.comp[i].Label);
                    Memo2->Lines->Strings[LabelLine[i]]= ss;
                 }
              }
              // Label option
              if(Labels1->Checked) {
-                for(i= 1; i<=Stars; i++) {
-                   sprintf(ss2, "%s %s", Labels[i], AUIDs[i]);
-                   sprintf(ss, "S%03iID  =%21s /Star identifier                               ", i, ss2);
-                   Memo2->Lines->Strings[LabelLine[i]- 3]= ss;
+                for(i= 0; i<=Stars; i++) {
+                   //sprintf(ss2, "%s %s", Labels[i], AUIDs[i]);
+                   //sprintf(ss, "S%03iID  =%21s /Star identifier                               ", i, ss2);
+                   //Memo2->Lines->Strings[LabelLine[i]- 3]= ss;
+                   // add label to C identifier
+                   sprintf(ss2, "C%s", pd.comp[i].Label);
+                   sprintf(ss, "S%03iFN  =%21s /Star function                                 ", i+1, ss2);
+                   Memo2->Lines->Strings[LabelLine[i]- 4]= ss;
                 }
              }
-
-             sprintf(ss, "NUMSTARS=                  %3i /Number of comp or field stars                 ", Stars);
+             pd.NumStars= Stars+1;
+             sprintf(ss, "NUMSTARS=                  %3i /Number of comp or field stars                 ", pd.NumStars);
              Memo2->Lines->Strings[2]= ss;
-             sprintf(ss, "CHARTDES=%21s /Chart designation                             ", T);
+             strcpy(pd.Chart, T);
+             sprintf(ss, "CHARTDES=%21s /Chart designation                             ", pd.Chart);
              Memo2->Lines->Strings[CDL]= ss;
-             sprintf(cs, "\"ChartID\",\"%s\"", T);
+             sprintf(cs, "\"ChartID\",\"%s\"", pd.Chart);
              Memo4->Lines->Strings[3]= cs;
-             as= SName;
+             as= pd.SName;
              SaveFile= as + "+" + T;// + ".STAR";
              state= 21;
              break;
@@ -339,8 +377,121 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
     if(state!=21)
        ShowMessage("This did not finish properly; do not use this STAR file. If your input data is good and the problem repeats please send the chartid and the PhotomCap version to me: George@GASilvis.net");
 }
-//---------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------
+void __fastcall TForm1::ReDoButtonClick(TObject *Sender)
+{
+   int i, is[20]; AnsiString s;
+   // check inputs
+   for(i= 0, s= CLabelEdit->Text; i< MaxComps; i++) {
+      if(0==s.AnsiCompareIC(pd.comp[i].Label)) break;
+   }
+   if(i==MaxComps) {
+      ShowMessage("C Label not found");
+      //return;
+   } else {
+      is[0]= i;
+   }
+   for(i= 0, s= KLabelEdit->Text; i< MaxComps; i++) {
+      if(0==s.AnsiCompareIC(pd.comp[i].Label)) break;
+   }
+   if(i==MaxComps) {
+      ShowMessage("K Label not found");
+      //return;
+   } else {
+      is[1]= i;
+   }
+
+
+   // then do it
+   ReDo(Sender, 2, is);
+   /* do all
+   for(i= 0; i<pd.NumStars; i++) is[i]= i;
+   ReDo(Sender, pd.NumStars, is);
+   */
+}
+
+
+//---------------------------------------------------------------------------
+// reprint the AAVSO reports
+void __fastcall TForm1::ReDo(TObject *Sender, unsigned int num, int* comps)
+{
+    char  ss[128], ss2[32], cs[256];
+    unsigned int i, j;
+    // Clear output
+    Memo2->Clear(); // AIP STAR fmt
+    Memo4->Clear(); // CSV generic
+
+    Memo2->Lines->Append("FILETYPE=             STARDATA /Star Data file                                ");
+    Memo2->Lines->Append("NUMTARGS=                    1 /Number of targets                             ");
+    sprintf(ss, "NUMSTARS=                  %3i /Number of comp or field stars                 ", num);
+    Memo2->Lines->Append(ss);
+    sprintf(ss, "NUMFILTE=                   %2i /Number of filter bands                        ", strlen(pd.Filters));
+    Memo2->Lines->Append(ss);
+    for(i= 0; i< strlen(pd.Filters); i++) {
+        sprintf(ss, "FILTER%02i=                    %c /Designation of filter band                    ", i+1, pd.Filters[i]);
+        Memo2->Lines->Append(ss);
+    }
+    sprintf(ss, "CHARTDES=%21s /Chart designation                             ", pd.Chart);
+    Memo2->Lines->Append(ss);
+
+    Memo2->Lines->Append("--------=                      /                                              ");
+    Memo2->Lines->Append("T001FN  =                    V /Target function                               ");
+    sprintf(ss, "T001ID  =%21s /Target identifier                             ", pd.SName);
+    ss[78]= 0; // make sure its not too long
+    Memo2->Lines->Append(ss);
+    sprintf(ss, "T001RA  =%21s /Target RA                                     ", pd.SRA);
+    Memo2->Lines->Append(ss);
+    sprintf(ss, "T001DC  =%21s /Target DEC                                    ", pd.SDec);
+    Memo2->Lines->Append(ss);
+
+    sprintf(cs, "\"Starname\",\"%s\"", pd.SName);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"Star RA\",\"%s\"", pd.SRA);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"Star DEC\",\"%s\"", pd.SDec);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"ChartID\",\"%s\"", pd.Chart);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"AUID\",\"RA\",\"Dec\",\"Label\"");
+    for(i= 0; i<strlen(pd.Filters); i++) {
+       sprintf(ss2, ",\"%c\",", pd.Filters[i]); // 2 cols: mag and err
+       strcat(cs, ss2);
+    }
+    Memo4->Lines->Append(cs);
+
+    for(i= 0; i<num; i++) {
+       Memo2->Lines->Append("--------=                      /                                              ");
+       sprintf(ss, "S%03iFN  =                    C /Star function                                 ", i+1);
+       if(Labels1->Checked) {
+          sprintf(ss2, "C%s", pd.comp[comps[i]].Label);
+          sprintf(ss, "S%03iFN  =%21s /Star function                                 ", i+1, ss2);
+       }
+       Memo2->Lines->Append(ss);
+       sprintf(ss, "S%03iID  =%21s /Star identifier                               ", i+1, pd.comp[comps[i]].AUID);
+       Memo2->Lines->Append(ss);
+       sprintf(cs, "\"%s\"", pd.comp[comps[i]].AUID);
+       sprintf(ss, "S%03iRA  =%21s /RA                                            ", i+1, pd.comp[comps[i]].RA);
+       Memo2->Lines->Append(ss);
+       sprintf(ss2, ",%s", pd.comp[comps[i]].RA); strcat(cs, ss2);
+       sprintf(ss, "S%03iDC  =%21s /DC                                            ", i+1, pd.comp[comps[i]].Dec);
+       Memo2->Lines->Append(ss);
+       sprintf(ss2, ",%s", pd.comp[comps[i]].Dec); strcat(cs, ss2);
+       sprintf(ss, "S%03iLab =%21s /Label                                         ", i+1, pd.comp[comps[i]].Label);
+       Memo2->Lines->Append(ss);
+       sprintf(ss2, ",%s", pd.comp[comps[i]].Label); strcat(cs, ss2);
+
+       for(j= 0; j< strlen(pd.Filters); j++) {
+          sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                          ", i+1, j+1, pd.comp[comps[i]].f[j].mag, pd.Filters[j]);
+          Memo2->Lines->Append(ss);
+          sprintf(ss2, ",%s", pd.comp[comps[i]].f[j].mag); strcat(cs, ss2);
+          sprintf(ss, "S%03iF%02iS=%21s /%c std dev                                     ", i+1, j+1, pd.comp[comps[i]].f[j].sd, pd.Filters[j]);
+          Memo2->Lines->Append(ss);
+          sprintf(ss2, ",%s", pd.comp[comps[i]].f[j].sd); strcat(cs, ss2);
+       }
+    }
+    Memo2->Lines->Append("END                                                                           ");
+}
 
 void __fastcall TForm1::DoitButtonClick(TObject *Sender)
 {
@@ -356,28 +507,18 @@ void __fastcall TForm1::DoitButtonClick(TObject *Sender)
 
 void __fastcall TForm1::Button2Click(TObject *Sender)
 {
-   AnsiString s, as; int pos;
-   if(CSV1->Checked) s= SaveFile+ ".CSV";
-   else              s= SaveFile+ ".STAR";
-   SaveDialog1->FileName= s;
-   if(SaveDialog1->Execute()) {
-      as= SaveDialog1->FileName;
-      pos = as.LastDelimiter("\\");
-      if(CSV1->Checked)
-         Memo4->Lines->SaveToFile(SaveDialog1->FileName);
-      else
-         Memo2->Lines->SaveToFile(SaveDialog1->FileName);
-      as.Delete(pos, 1000);
-      SaveDialog1->InitialDir= as;
+   if(CSV1->Checked) {
+      Memo4->SelectAll();
+      Memo4->CopyToClipboard();
+   } else {
+      Memo2->SelectAll();
+      Memo2->CopyToClipboard();
    }
-   PutIniData(Sender);
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::Help1Click(TObject *Sender)
 {
-      //GroupBox1->BringToFront();
-      //GroupBox1->Visible= true;
       Application->HelpJump("Introduction");
 }
 //---------------------------------------------------------------------------
@@ -717,7 +858,21 @@ void __fastcall TForm1::SaveSourceFile1Click(TObject *Sender)
 
 void __fastcall TForm1::SaveResultFile1Click(TObject *Sender)
 {
-   Button2Click(Sender);
+   AnsiString s, as; int pos;
+   if(CSV1->Checked) s= SaveFile+ ".CSV";
+   else              s= SaveFile+ ".STAR";
+   SaveDialog1->FileName= s;
+   if(SaveDialog1->Execute()) {
+      as= SaveDialog1->FileName;
+      pos = as.LastDelimiter("\\");
+      if(CSV1->Checked)
+         Memo4->Lines->SaveToFile(SaveDialog1->FileName);
+      else
+         Memo2->Lines->SaveToFile(SaveDialog1->FileName);
+      as.Delete(pos, 1000);
+      SaveDialog1->InitialDir= as;
+   }
+   PutIniData(Sender);
 }
 //---------------------------------------------------------------------------
 
@@ -740,5 +895,6 @@ void __fastcall TForm1::SPaltErrorClick(TObject *Sender)
      Memo4->Clear();
 }
 //---------------------------------------------------------------------------
+
 
 

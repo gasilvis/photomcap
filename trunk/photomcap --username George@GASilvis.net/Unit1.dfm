@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 123
-  Top = 169
+  Left = 58
+  Top = 158
   Width = 979
   Height = 563
   HorzScrollBar.Visible = False
@@ -26,7 +26,7 @@ object Form1: TForm1
     Top = 0
     Width = 40
     Height = 22
-    Caption = 'ver 14'
+    Caption = 'ver 15'
   end
   object Label2: TLabel
     Left = 144
@@ -54,6 +54,7 @@ object Form1: TForm1
     Font.Name = 'Courier New'
     Font.Style = []
     ParentFont = False
+    ScrollBars = ssVertical
     TabOrder = 1
     WordWrap = False
   end
@@ -69,6 +70,7 @@ object Form1: TForm1
     Font.Name = 'Courier New'
     Font.Style = []
     ParentFont = False
+    ScrollBars = ssVertical
     TabOrder = 0
     WordWrap = False
   end
@@ -83,11 +85,12 @@ object Form1: TForm1
     Font.Name = 'Courier New'
     Font.Style = []
     ParentFont = False
+    ScrollBars = ssVertical
     TabOrder = 5
   end
   object DoitButton: TButton
     Left = 24
-    Top = 120
+    Top = 96
     Width = 75
     Height = 25
     Hint = 'Click to convert to STAR format'
@@ -107,12 +110,12 @@ object Form1: TForm1
     Visible = False
   end
   object Button2: TButton
-    Left = 24
-    Top = 344
-    Width = 75
+    Left = 16
+    Top = 416
+    Width = 97
     Height = 25
-    Hint = 'Save in the AIPWin/Data directory'
-    Caption = 'Save It!'
+    Hint = 'Copy output to clibboard'
+    Caption = 'To Clipboard'
     TabOrder = 4
     OnClick = Button2Click
   end
@@ -136,9 +139,43 @@ object Form1: TForm1
     Visible = False
     OnClick = SPaltErrorClick
   end
+  object GroupBox1: TGroupBox
+    Left = 16
+    Top = 264
+    Width = 97
+    Height = 137
+    Hint = 'Re do the output with just 2 comp stars'
+    Caption = 'ReDo'
+    TabOrder = 8
+    object CLabelEdit: TEdit
+      Left = 16
+      Top = 24
+      Width = 60
+      Height = 30
+      TabOrder = 0
+      Text = 'C label'
+    end
+    object KLabelEdit: TEdit
+      Left = 16
+      Top = 64
+      Width = 60
+      Height = 30
+      TabOrder = 1
+      Text = 'K label'
+    end
+    object ReDoButton: TButton
+      Left = 16
+      Top = 104
+      Width = 60
+      Height = 25
+      Caption = 'ReDo'
+      TabOrder = 2
+      OnClick = ReDoButtonClick
+    end
+  end
   object SaveDialog1: TSaveDialog
-    Left = 56
-    Top = 376
+    Left = 88
+    Top = 448
   end
   object ElasticForm1: TElasticForm
     DesignScreenWidth = 1448
@@ -148,8 +185,8 @@ object Form1: TForm1
     DesignFormHeight = 563
     DesignFormClientWidth = 971
     DesignFormClientHeight = 505
-    DesignFormLeft = 123
-    DesignFormTop = 169
+    DesignFormLeft = 58
+    DesignFormTop = 158
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -17
@@ -212,11 +249,11 @@ object Form1: TForm1
     end
   end
   object OpenDialog1: TOpenDialog
-    Left = 16
-    Top = 160
+    Left = 8
+    Top = 448
   end
   object SaveDialog2: TSaveDialog
-    Left = 64
-    Top = 160
+    Left = 48
+    Top = 448
   end
 end
