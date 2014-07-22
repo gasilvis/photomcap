@@ -102,10 +102,13 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
        switch(state) {
           case 0: // find star name
              if(0==strcmp(T, "Photometry")) {
-                T= strtok(NULL, delim);
-                if(0==strcmp(T, "for")) {
+                T= strtok(NULL, delim); // next token
+                if(0==strcmp(T, "for")){ // ok, the name starts here
                    pd.SName[0]= 0; // init
                    state= 1;
+                } else if(0==strcmp(T, "From")){ // uhoh, there is no star name
+                   strcpy(pd.SName, "unknown");
+                   state= 2;
                 }
              }
              break;
