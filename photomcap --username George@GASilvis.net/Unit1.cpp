@@ -24,6 +24,7 @@
 
 #include "Unit1.h"
 #include "aboutbox.h"
+#include "helpBox.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <math.h>
@@ -528,7 +529,8 @@ void __fastcall TForm1::Button2Click(TObject *Sender)
 
 void __fastcall TForm1::Help1Click(TObject *Sender)
 {
-      Application->HelpJump("Introduction");
+//      Application->HelpJump("Introduction");
+        Form2->ShowModal();
 }
 //---------------------------------------------------------------------------
 
