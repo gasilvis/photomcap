@@ -97,23 +97,24 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
 
     Memo2->Lines->Append("FILETYPE=             STARDATA /Star Data file                                ");
     Memo2->Lines->Append("NUMTARGS=                    1 /Number of targets                             ");
+    pd.Chart[0]= 0; // clear
     T= strtok(M1, delim);
     do {
        switch(state) {
           case 0: // find star name
-             if(0==strcmp(T, "Photometry")) {
+             if(0==strcmp(T, "Photometry") || 0==strcmp(T, "photometry")) {
                 T= strtok(NULL, delim); // next token
                 if(0==strcmp(T, "for")){ // ok, the name starts here
                    pd.SName[0]= 0; // init
                    state= 1;
-                } else if(0==strcmp(T, "From")){ // uhoh, there is no star name
+                } else if(0==strcmp(T, "From") || 0==strcmp(T, "from")){ // uhoh, there is no star name
                    strcpy(pd.SName, "unknown");
                    state= 2;
                 }
              }
              break;
           case 1: // get end of name (it may have embedded blanks
-             if(0==strcmp(T, "From")) {
+             if(0==strcmp(T, "From") || 0==strcmp(T, "from")) {
                 strcpy(pd.SName, &pd.SName[1]); // trim leading blank
                 for(i= 0; i<strlen(pd.SName); i++) pd.SName[i]= toupper(pd.SName[i]);
                 state= 2;
@@ -140,7 +141,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              state= 5;
              break;
           case 5: // find dec
-             if(0==strcmp(T, "Decl.:")) {
+             if(0==strcmp(T, "Decl.:") || 0==strcmp(T, "Dec:")) {
                 state= 6;
              }
              break;
@@ -158,7 +159,12 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              state= 8;
              break;
           case 8: // get filters
-             if(0==strcmp(T, "Dec.")) {  // look for "Dec.   Label"
+             // Beta  look for chart line
+             if(0==strcmp(T, "as")) {
+                T= strtok(NULL, delim); // next token
+                strcpy(pd.Chart, T);
+             }
+             if(0==strcmp(T, "Dec.") || 0==strcmp(T, "Dec")) {  // look for "Dec.   Label"
                 T= strtok(NULL, delim);
                 if(0==strcmp(T, "Label")) {
                    state= 9;
@@ -215,7 +221,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              }
              break;
           case 10: // eat the comments
-             if(0==strcmp(T, "Report")) {
+             if(0==strcmp(T, "Report") || 0==strcmp(T, "AUID")) {
                 state= 19;
                 break;
              }
@@ -278,7 +284,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              break;
           case 17:
              if((Fs+1)==BmVcolTmp) { // skip the B-V column
-                if(strcmp(T, "-")) {
+                if(strcmp(T, "-") || 0==strcmp(T, "\x97")) {
                    T= strtok(NULL, delim); // kill the std dev token too
                 }
                 BmVcolTmp= 999;
@@ -288,7 +294,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
                 break;
              }
              Fs++;
-             if(0==strcmp(T, "-")) { // filter with no data?
+             if(0==strcmp(T, "-") || 0==strcmp(T, "\x97")) { // filter with no data?
                 strcpy(pd.comp[Stars].f[Fs].mag, "0.000");
                 sprintf(ss, "S%03iF%02iM=%21s /%c standard magnitude                          ", Stars+1, Fs+1, pd.comp[Stars].f[Fs].mag, pd.Filters[Fs]);
                 Memo2->Lines->Append(ss);
@@ -324,7 +330,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              }
              break;
           case 19: // find chart
-             if(0==strcmp(T, "as:")) {
+             if(0==strcmp(T, "as:") || strlen(pd.Chart) ) {
                 state= 20;
              }
              break;
@@ -362,7 +368,7 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
              pd.NumStars= Stars+1;
              sprintf(ss, "NUMSTARS=                  %3i /Number of comp or field stars                 ", pd.NumStars);
              Memo2->Lines->Strings[2]= ss;
-             strcpy(pd.Chart, T);
+             if(0== strlen(pd.Chart)) strcpy(pd.Chart, T);
              sprintf(ss, "CHARTDES=%21s /Chart designation                             ", pd.Chart);
              Memo2->Lines->Strings[CDL]= ss;
              sprintf(cs, "\"ChartID\",\"%s\"", pd.Chart);
