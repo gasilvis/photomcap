@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 58
-  Top = 158
+  Left = 83
+  Top = 218
   Width = 979
   Height = 563
   HorzScrollBar.Visible = False
@@ -26,7 +26,7 @@ object Form1: TForm1
     Top = 0
     Width = 40
     Height = 22
-    Caption = 'ver 17'
+    Caption = 'ver 18'
   end
   object Label2: TLabel
     Left = 144
@@ -185,8 +185,8 @@ object Form1: TForm1
     DesignFormHeight = 563
     DesignFormClientWidth = 971
     DesignFormClientHeight = 505
-    DesignFormLeft = 58
-    DesignFormTop = 158
+    DesignFormLeft = 83
+    DesignFormTop = 218
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -17
