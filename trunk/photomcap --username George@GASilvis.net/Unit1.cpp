@@ -581,7 +581,7 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
          versionLabel->Font->Color= clBlue;
          versionLabel->Caption= s.sprintf("Click here to download version %s", cp);
       } else {
-         versionLabel->Caption= s.sprintf("%s is the latest version of SDG", cp);
+         versionLabel->Caption= s.sprintf("%s is the latest version", cp);
       }
    } __except (TRUE) {
       Form1->Memo4->Lines->Add("GET Failed !");
