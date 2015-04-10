@@ -37,7 +37,7 @@
 #pragma resource "*.dfm"
 TForm1 *Form1;
 
-#define Version 19
+#define Version 20
 // add to PClog.php
 
 //---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 #define MaxFilters 20
-#define MaxComps 50
+#define MaxComps 200
 typedef struct {
    char mag[16];
    char sd[16];
