@@ -1,18 +1,15 @@
 object Form1: TForm1
-  Left = 83
-  Top = 218
+  Left = 378
+  Top = 162
   Width = 979
   Height = 563
   HorzScrollBar.Visible = False
   VertScrollBar.Visible = False
-  Caption = 
-    'PhotomCap : Capturing AAVSO photometry into AIPWin STAR format, ' +
-    'and other formats too'
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clWindowText
-  Font.Height = -17
-  Font.Name = 'Arial Narrow'
+  Font.Height = -20
+  Font.Name = 'Arial'
   Font.Style = []
   Menu = MainMenu1
   OldCreateOrder = False
@@ -20,30 +17,31 @@ object Form1: TForm1
   ShowHint = True
   OnCreate = FormCreate
   PixelsPerInch = 120
-  TextHeight = 22
-  object Label1: TLabel
-    Left = 896
-    Top = 0
-    Width = 40
-    Height = 22
-    Caption = 'ver 18'
-  end
+  TextHeight = 23
   object Label2: TLabel
     Left = 144
     Top = 8
-    Width = 225
-    Height = 22
+    Width = 318
+    Height = 23
     Caption = 'Paste AAVSO photometry data here'
   end
   object Label3: TLabel
-    Left = 136
+    Left = 144
     Top = 232
-    Width = 239
-    Height = 22
+    Width = 334
+    Height = 23
     Caption = 'AIPWin MMT STAR file appears here '
   end
+  object versionLabel: TLabel
+    Left = 560
+    Top = 0
+    Width = 66
+    Height = 23
+    Caption = '           '
+    OnClick = versionLabelClick
+  end
   object Memo2: TMemo
-    Left = 128
+    Left = 144
     Top = 256
     Width = 817
     Height = 233
@@ -59,7 +57,7 @@ object Form1: TForm1
     WordWrap = False
   end
   object Memo1: TMemo
-    Left = 128
+    Left = 144
     Top = 32
     Width = 817
     Height = 201
@@ -75,7 +73,7 @@ object Form1: TForm1
     WordWrap = False
   end
   object Memo4: TMemo
-    Left = 128
+    Left = 144
     Top = 256
     Width = 817
     Height = 233
@@ -110,9 +108,9 @@ object Form1: TForm1
     Visible = False
   end
   object Button2: TButton
-    Left = 16
+    Left = 8
     Top = 416
-    Width = 97
+    Width = 129
     Height = 25
     Hint = 'Copy output to clibboard'
     Caption = 'To Clipboard'
@@ -120,9 +118,9 @@ object Form1: TForm1
     OnClick = Button2Click
   end
   object Button4: TButton
-    Left = 72
+    Left = 64
     Top = 200
-    Width = 49
+    Width = 57
     Height = 25
     Caption = 'clear'
     TabOrder = 6
@@ -142,7 +140,7 @@ object Form1: TForm1
   object GroupBox1: TGroupBox
     Left = 16
     Top = 264
-    Width = 97
+    Width = 113
     Height = 137
     Hint = 'Re do the output with just 2 comp stars'
     Caption = 'ReDo'
@@ -150,16 +148,16 @@ object Form1: TForm1
     object CLabelEdit: TEdit
       Left = 16
       Top = 24
-      Width = 60
-      Height = 30
+      Width = 89
+      Height = 31
       TabOrder = 0
       Text = 'C label'
     end
     object KLabelEdit: TEdit
       Left = 16
       Top = 64
-      Width = 60
-      Height = 30
+      Width = 89
+      Height = 31
       TabOrder = 1
       Text = 'K label'
     end
@@ -185,12 +183,12 @@ object Form1: TForm1
     DesignFormHeight = 563
     DesignFormClientWidth = 971
     DesignFormClientHeight = 505
-    DesignFormLeft = 83
-    DesignFormTop = 218
+    DesignFormLeft = 378
+    DesignFormTop = 162
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
-    Font.Height = -17
-    Font.Name = 'Arial Narrow'
+    Font.Height = -20
+    Font.Name = 'Arial'
     Font.Style = []
     Version = 700
     Left = 80
@@ -255,5 +253,25 @@ object Form1: TForm1
   object SaveDialog2: TSaveDialog
     Left = 48
     Top = 448
+  end
+  object HttpCli1: THttpCli
+    LocalAddr = '0.0.0.0'
+    ProxyPort = '80'
+    Agent = 'Mozilla/4.0'
+    Accept = 'image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*'
+    NoCache = False
+    ContentTypePost = 'application/x-www-form-urlencoded'
+    MultiThreaded = False
+    RequestVer = '1.0'
+    FollowRelocation = True
+    LocationChangeMaxCount = 5
+    BandwidthLimit = 10000
+    BandwidthSampling = 1000
+    Options = []
+    OnDocBegin = HttpCli1DocBegin
+    OnDocEnd = HttpCli1DocEnd
+    SocksAuthentication = socksNoAuthentication
+    Left = 936
+    Top = 8
   end
 end
