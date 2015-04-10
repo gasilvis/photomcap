@@ -1,20 +1,20 @@
 object fAbout: TfAbout
-  Left = 263
-  Top = 218
+  Left = 419
+  Top = 203
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   ClientHeight = 301
   ClientWidth = 479
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
+  Font.Charset = ANSI_CHARSET
   Font.Color = clWindowText
-  Font.Height = -13
-  Font.Name = 'MS Sans Serif'
+  Font.Height = -20
+  Font.Name = 'Arial'
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
   PixelsPerInch = 120
-  TextHeight = 16
+  TextHeight = 23
   object Panel1: TPanel
     Left = 16
     Top = 16
@@ -125,11 +125,11 @@ object fAbout: TfAbout
       ParentFont = False
     end
     object Label6: TLabel
-      Left = 88
+      Left = 48
       Top = 128
-      Width = 262
+      Width = 360
       Height = 16
-      Caption = 'http://code.google.com/p/photomcap/'
+      Caption = 'http://www.gasilvis.com/PhotomCap/PhotomCap.exe'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13

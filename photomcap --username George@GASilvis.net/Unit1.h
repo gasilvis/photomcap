@@ -10,6 +10,8 @@
 #include <Dialogs.hpp>
 #include "ElastFrm.hpp"
 #include <Menus.hpp>
+#include "HttpProt.hpp"
+//#include <HttpProt.h>
 //---------------------------------------------------------------------------
 class TForm1 : public TForm
 {
@@ -23,7 +25,6 @@ __published:	// IDE-managed Components
    TElasticForm *ElasticForm1;
    TMainMenu *MainMenu1;
    TMenuItem *Help1;
-   TLabel *Label1;
    TLabel *Label2;
    TLabel *Label3;
    TMenuItem *Options1;
@@ -46,6 +47,8 @@ __published:	// IDE-managed Components
    TEdit *CLabelEdit;
    TEdit *KLabelEdit;
    TButton *ReDoButton;
+   TLabel *versionLabel;
+   THttpCli *HttpCli1;
    void __fastcall DoitButtonClick(TObject *Sender);
    void __fastcall Button2Click(TObject *Sender);
 //   void __fastcall Button3Click(TObject *Sender);
@@ -62,6 +65,9 @@ __published:	// IDE-managed Components
    void __fastcall About1Click(TObject *Sender);
    void __fastcall SPaltErrorClick(TObject *Sender);
    void __fastcall ReDoButtonClick(TObject *Sender);
+   void __fastcall HttpCli1DocBegin(TObject *Sender);
+   void __fastcall HttpCli1DocEnd(TObject *Sender);
+   void __fastcall versionLabelClick(TObject *Sender);
 private:	// User declarations
    void __fastcall TForm1::PutIniData(TObject *Sender);
    void __fastcall TForm1::GetIniData(TObject *Sender);
@@ -69,6 +75,8 @@ private:	// User declarations
    void __fastcall TForm1::DoSeqPlot(TObject *Sender);
    float __fastcall TForm1::ErrorComp(float err1, float err2);
    void __fastcall TForm1::ReDo(TObject *Sender, unsigned int num, int* comps);
+   AnsiString __fastcall TForm1::EncodeURIComponent(AnsiString ASrc);
+   bool __fastcall TForm1::IsSafeChar(int ch);
 
 public:		// User declarations
    __fastcall TForm1(TComponent* Owner);

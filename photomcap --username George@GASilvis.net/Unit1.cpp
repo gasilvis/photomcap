@@ -32,8 +32,14 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "ElastFrm"
+#pragma link "HttpProt"
+#pragma link "HttpProt"
 #pragma resource "*.dfm"
 TForm1 *Form1;
+
+#define Version 19
+// add to PClog.php
+
 //---------------------------------------------------------------------------
 __fastcall TForm1::TForm1(TComponent* Owner)
    : TForm(Owner)
@@ -544,7 +550,46 @@ void __fastcall TForm1::Labels1Click(TObject *Sender)
 
 void __fastcall TForm1::FormCreate(TObject *Sender)
 {
+   TStream *DataIn;
+   char cp[10000];
+   int cver;
+   AnsiString s;
+   Form1->Caption= s.sprintf("PhotomCap : Capturing AAVSO photometry into AIPWin STAR format, and other formats too (version %d)", Version);
    GetIniData(Sender);
+
+   DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+   char szBuf[MAX_COMPUTERNAME_LENGTH + 1];
+   szBuf[0] = '\0';
+   //Retrieves the computer name
+   GetComputerName(szBuf, &dwSize);
+
+   // get current version information
+   HttpCli1->URL        = EncodeURIComponent(s.sprintf("http://www.gasilvis.com/PhotomCap/PClog.php?logentry=%s, ver=%d", szBuf, Version)); // returns currentVersion
+   HttpCli1->RcvdStream = NULL;
+   try {
+      HttpCli1->Get();
+      //Form1->Memo4->Lines->Add("StatusCode = " + IntToStr(Form1->HttpCli1->StatusCode));
+      //for (I = 0; I < Form1->HttpCli1->RcvdHeader->Count; I++)
+      //   Form1->Memo4->Lines->Add("hdr>" + Form1->HttpCli1->RcvdHeader->Strings[I]);
+      DataIn = new TFileStream(Form1->HttpCli1->DocName, fmOpenRead);
+      //Memo4->Lines->LoadFromStream(DataIn);
+      DataIn->ReadBuffer(cp, min(10000, DataIn->Size));
+      delete DataIn;
+      sscanf(cp, "%d", &cver);
+      if(cver > Version) {
+         versionLabel->Tag= 1;
+         versionLabel->Font->Color= clBlue;
+         versionLabel->Caption= s.sprintf("Click here to download version %s", cp);
+      } else {
+         versionLabel->Caption= s.sprintf("%s is the latest version of SDG", cp);
+      }
+   } __except (TRUE) {
+      Form1->Memo4->Lines->Add("GET Failed !");
+      Form1->Memo4->Lines->Add("StatusCode   = " + IntToStr(Form1->HttpCli1->StatusCode));
+      Form1->Memo4->Lines->Add("ReasonPhrase = " + Form1->HttpCli1->ReasonPhrase);
+      //return 0;
+   }
+
 }
 //---------------------------------------------------------------------------
 
@@ -907,5 +952,79 @@ void __fastcall TForm1::SPaltErrorClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TForm1::HttpCli1DocBegin(TObject *Sender)
+{
+    //Memo4->Lines->Add(HttpCli1->ContentType + " => " + HttpCli1->DocName);
+    //Memo4->Lines->Add("Document = " + HttpCli1->DocName);
+    HttpCli1->RcvdStream = new TFileStream(HttpCli1->DocName, fmCreate);
+}
+
+void __fastcall TForm1::HttpCli1DocEnd(TObject *Sender)
+{
+    if (HttpCli1->RcvdStream) {
+        delete HttpCli1->RcvdStream;
+        HttpCli1->RcvdStream = NULL;
+    }
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::versionLabelClick(TObject *Sender)
+{
+    if(versionLabel->Tag) {
+//       ShellExecute(Handle,"open", "https://github.com/gasilvis/SDG/raw/master/SidDataGrabber.exe",0,0,SW_SHOW);
+       ShellExecute(Handle,"open", "http://www.gasilvis.com/PhotomCap/PhotomCap.exe",0,0,SW_SHOW);
+    }
+}
+//---------------------------------------------------------------------------
+bool __fastcall TForm1::IsSafeChar(int ch)
+{
+   bool Result;
+   if     (ch >= 48 && ch <= 57) Result= true;    // 0-9
+   else if(ch >= 61 && ch <= 90) Result= true;  // =?>@A-Z
+   else if(ch >= 97 && ch <= 122) Result= true;  // a-z
+   else if(ch == 33) Result= true; // !
+   else if(ch >= 39 && ch <= 42) Result= true; // '()*
+   else if(ch >= 44 && ch <= 46) Result= true; // ,-.
+   else if(ch == 95) Result= true; // _
+   else if(ch == 126) Result= true; // ~
+   else if(ch == 58) Result= true; // :
+   else if(ch == 47) Result= true; // /
+   else Result= false;
+   return Result;
+}
+
+// the only thing needed to be encoded are spaces
+// this code is pretty hacked up
+AnsiString __fastcall TForm1::EncodeURIComponent(AnsiString ASrc)
+{
+   AnsiString UTF8String, HexMap= "0123456789ABCDEF", Result= "", ASrcUTF8;
+   int I= 1, J= 1;
+
+   ASrcUTF8= ASrc; //ASrcUTF8 := UTF8Encode(ASrc);
+   // UTF8Encode call not strictly necessary but
+   // prevents implicit conversion warning
+
+   Result.SetLength(ASrcUTF8.Length() * 3); // space to %xx encode every byte
+   while(I <= ASrcUTF8.Length()) {
+      if(IsSafeChar(ASrcUTF8[I])) {
+         Result[J]= ASrcUTF8[I];
+         J++;
+      }
+/*      else if(ASrcUTF8[I] == ' ') {
+         Result[J]= '+';
+         J++;
+      } */
+      else {
+         Result[J]= '%';
+         Result[J+1]= HexMap[(ASrcUTF8[I] >> 4) + 1];
+         Result[J+2]= HexMap[(ASrcUTF8[I] & 0x0F) + 1];
+         J+= 3;
+      }
+      I++;
+   }
+
+   Result.SetLength(J-1);
+   return Result;
+}
 
 
