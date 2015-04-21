@@ -570,7 +570,6 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
    if(httpGet(s.sprintf("http://www.gasilvis.com/PhotomCap/PClog.php?logentry=%s, ver=%d", szBuf, Version), cp, sizeof(cp))) {
       sscanf(cp, "%d", &cver);
       if(cver > Version) {
-         versionLabel->Tag= 1;
          versionLabel->Font->Color= clBlue;
          versionLabel->Caption= s.sprintf("Click here to download version %i", cver);
       } else {
@@ -943,8 +942,8 @@ void __fastcall TForm1::SPaltErrorClick(TObject *Sender)
 void __fastcall TForm1::versionLabelClick(TObject *Sender)
 {
     if(versionLabel->Tag) {
-//       ShellExecute(Handle,"open", "https://github.com/gasilvis/SDG/raw/master/SidDataGrabber.exe",0,0,SW_SHOW);
-       ShellExecute(Handle,"open", "http://www.gasilvis.com/PhotomCap/PhotomCap.exe",0,0,SW_SHOW);
+       ShellExecute(Handle,"open", "https://github.com/gasilvis/photomcap/raw/master/PhotomCap.exe",0,0,SW_SHOW);
+//       ShellExecute(Handle,"open", "http://www.gasilvis.com/PhotomCap/PhotomCap.exe",0,0,SW_SHOW);
     }
 }
 //---------------------------------------------------------------------------

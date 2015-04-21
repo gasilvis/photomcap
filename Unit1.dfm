@@ -33,6 +33,7 @@ object Form1: TForm1
     Caption = 'AIPWin MMT STAR file appears here '
   end
   object versionLabel: TLabel
+    Tag = 1
     Left = 560
     Top = 0
     Width = 66
