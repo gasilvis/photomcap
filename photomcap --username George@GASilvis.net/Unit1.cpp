@@ -37,9 +37,11 @@
 #pragma resource "*.dfm"
 TForm1 *Form1;
 
-#define Version 20
-// add to PClog.php
-
+#define Version 21
+/* add to PClog.php
+   21
+   - tidy up httpGet
+*/
 //---------------------------------------------------------------------------
 __fastcall TForm1::TForm1(TComponent* Owner)
    : TForm(Owner)
@@ -47,7 +49,7 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 #define MaxFilters 20
-#define MaxComps 200
+#define MaxComps 300
 typedef struct {
    char mag[16];
    char sd[16];
@@ -564,32 +566,17 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
    GetComputerName(szBuf, &dwSize);
 
    // get current version information
-   HttpCli1->URL        = EncodeURIComponent(s.sprintf("http://www.gasilvis.com/PhotomCap/PClog.php?logentry=%s, ver=%d", szBuf, Version)); // returns currentVersion
-   HttpCli1->RcvdStream = NULL;
-   try {
-      HttpCli1->Get();
-      //Form1->Memo4->Lines->Add("StatusCode = " + IntToStr(Form1->HttpCli1->StatusCode));
-      //for (I = 0; I < Form1->HttpCli1->RcvdHeader->Count; I++)
-      //   Form1->Memo4->Lines->Add("hdr>" + Form1->HttpCli1->RcvdHeader->Strings[I]);
-      DataIn = new TFileStream(Form1->HttpCli1->DocName, fmOpenRead);
-      //Memo4->Lines->LoadFromStream(DataIn);
-      DataIn->ReadBuffer(cp, min(10000, DataIn->Size));
-      delete DataIn;
+//   if(httpGet(EncodeURIComponent(s.sprintf("http://www.gasilvis.com/PhotomCap/PClog.php?logentry=%s, ver=%d", szBuf, Version)), cp, sizeof(cp))) {
+   if(httpGet(s.sprintf("http://www.gasilvis.com/PhotomCap/PClog.php?logentry=%s, ver=%d", szBuf, Version), cp, sizeof(cp))) {
       sscanf(cp, "%d", &cver);
       if(cver > Version) {
          versionLabel->Tag= 1;
          versionLabel->Font->Color= clBlue;
-         versionLabel->Caption= s.sprintf("Click here to download version %s", cp);
+         versionLabel->Caption= s.sprintf("Click here to download version %i", cver);
       } else {
-         versionLabel->Caption= s.sprintf("%s is the latest version", cp);
+         versionLabel->Caption= s.sprintf("%i is the latest version", cver);
       }
-   } __except (TRUE) {
-      Form1->Memo4->Lines->Add("GET Failed !");
-      Form1->Memo4->Lines->Add("StatusCode   = " + IntToStr(Form1->HttpCli1->StatusCode));
-      Form1->Memo4->Lines->Add("ReasonPhrase = " + Form1->HttpCli1->ReasonPhrase);
-      //return 0;
    }
-
 }
 //---------------------------------------------------------------------------
 
@@ -952,21 +939,6 @@ void __fastcall TForm1::SPaltErrorClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TForm1::HttpCli1DocBegin(TObject *Sender)
-{
-    //Memo4->Lines->Add(HttpCli1->ContentType + " => " + HttpCli1->DocName);
-    //Memo4->Lines->Add("Document = " + HttpCli1->DocName);
-    HttpCli1->RcvdStream = new TFileStream(HttpCli1->DocName, fmCreate);
-}
-
-void __fastcall TForm1::HttpCli1DocEnd(TObject *Sender)
-{
-    if (HttpCli1->RcvdStream) {
-        delete HttpCli1->RcvdStream;
-        HttpCli1->RcvdStream = NULL;
-    }
-}
-//---------------------------------------------------------------------------
 
 void __fastcall TForm1::versionLabelClick(TObject *Sender)
 {
@@ -976,6 +948,10 @@ void __fastcall TForm1::versionLabelClick(TObject *Sender)
     }
 }
 //---------------------------------------------------------------------------
+
+
+
+/* /  not needed
 bool __fastcall TForm1::IsSafeChar(int ch)
 {
    bool Result;
@@ -1010,10 +986,10 @@ AnsiString __fastcall TForm1::EncodeURIComponent(AnsiString ASrc)
          Result[J]= ASrcUTF8[I];
          J++;
       }
-/*      else if(ASrcUTF8[I] == ' ') {
-         Result[J]= '+';
-         J++;
-      } */
+//      else if(ASrcUTF8[I] == ' ') {
+//         Result[J]= '+';
+//         J++;
+//      }
       else {
          Result[J]= '%';
          Result[J+1]= HexMap[(ASrcUTF8[I] >> 4) + 1];
@@ -1022,9 +998,94 @@ AnsiString __fastcall TForm1::EncodeURIComponent(AnsiString ASrc)
       }
       I++;
    }
-
    Result.SetLength(J-1);
    return Result;
 }
+*/
+
+
+// http Get stuff
+bool __fastcall TForm1::httpGet(AnsiString URL, char* buffer, int bufsize)
+{
+   TStream *DataIn;
+   // simple encoding: replace ' ' with '+'
+   while(URL.Pos(" ")) URL[URL.Pos(" ")]= '+';
+   HttpCli1->URL        = URL;
+   HttpCli1->RcvdStream = NULL;
+   char altbuffer[100];
+   char* buf;
+   if(buffer==NULL) { // return not expected
+      buf= altbuffer;
+      bufsize= sizeof(buffer);
+   } else { buf= buffer; }
+   try {
+      HttpCli1->Get();
+      DataIn = new TFileStream(Form1->HttpCli1->DocName, fmOpenRead);
+      DataIn->ReadBuffer(buf, min(bufsize, DataIn->Size));
+      delete DataIn;
+      remove(HttpCli1->DocName.c_str());
+      return true;
+   } __except (TRUE) {
+      //Form1->Memo4->Lines->Add("GET Failed !");
+      //Form1->Memo4->Lines->Add("StatusCode   = " + IntToStr(Form1->HttpCli1->StatusCode));
+      //Form1->Memo4->Lines->Add("ReasonPhrase = " + Form1->HttpCli1->ReasonPhrase);
+      return false;
+   }
+}
+void __fastcall TForm1::HttpCli1DocBegin(TObject *Sender)
+{
+    //Memo4->Lines->Add(HttpCli1->ContentType + " => " + HttpCli1->DocName);
+    //Memo4->Lines->Add("Document = " + HttpCli1->DocName);
+    HttpCli1->RcvdStream = new TFileStream(HttpCli1->DocName, fmCreate);
+}
+
+void __fastcall TForm1::HttpCli1DocEnd(TObject *Sender)
+{
+    if (HttpCli1->RcvdStream) {
+        delete HttpCli1->RcvdStream;
+        HttpCli1->RcvdStream = NULL;
+    }
+}
+//---------------------------------------------------------------------------
+
+
+/*
+// http://www.experts-exchange.com/Programming/Languages/CPP/Q_20552424.html
+ DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+   char szBuf[MAX_COMPUTERNAME_LENGTH + 1];
+   szBuf[0] = '\0';
+
+   //Retrieves the computer name
+   GetComputerName(szBuf, &dwSize);
+
+   //Adds the computer name to the memo
+   Memo1->Lines->Add(AnsiString(szBuf));
+
+//Windows Socket initialization stuff
+   //Why the gethostbyname returned null
+   WSAData wsaData;
+   if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
+        ShowMessage("Error!");
+    }
+
+   //Gethostbyname
+   //Better to use this funtion because you could use a dns name or a computer name
+   struct hostent *phe;
+   phe = gethostbyname(szBuf);
+
+   //Converts the struct address to an AnsiString format
+   AnsiString ipaddr;
+   ipaddr = AnsiString(int(LOBYTE(LOWORD(*((DWORD*)phe->h_addr_list[0]))))) + ".";
+   ipaddr+= AnsiString(int(HIBYTE(LOWORD(*((DWORD*)phe->h_addr_list[0]))))) + ".";
+   ipaddr+= AnsiString(int(LOBYTE(HIWORD(*((DWORD*)phe->h_addr_list[0]))))) + ".";
+   ipaddr+= AnsiString(int(HIBYTE(HIWORD(*((DWORD*)phe->h_addr_list[0])))));
+
+   //Add the ip address to the memo
+   Memo1->Lines->Add(ipaddr);
+
+   //Windows socket clean up
+   WSACleanup();
+*/
+
 
 
