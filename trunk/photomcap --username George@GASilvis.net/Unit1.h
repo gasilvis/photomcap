@@ -80,6 +80,7 @@ private:	// User declarations
 
 public:		// User declarations
    __fastcall TForm1(TComponent* Owner);
+   bool __fastcall TForm1::httpGet(AnsiString URL, char* buffer, int bufsize);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;
