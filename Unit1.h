@@ -11,6 +11,8 @@
 #include "ElastFrm.hpp"
 #include <Menus.hpp>
 #include "HttpProt.hpp"
+#include "LibXmlComps.hpp"
+#include "LibXmlParser.hpp"
 //#include <HttpProt.h>
 //---------------------------------------------------------------------------
 class TForm1 : public TForm
@@ -49,6 +51,9 @@ __published:	// IDE-managed Components
    TButton *ReDoButton;
    TLabel *versionLabel;
    THttpCli *HttpCli1;
+   TEdit *chartEdit;
+   TEasyXmlScanner *EasyXmlScanner1;
+   TLabel *chartMsg;
    void __fastcall DoitButtonClick(TObject *Sender);
    void __fastcall Button2Click(TObject *Sender);
 //   void __fastcall Button3Click(TObject *Sender);
@@ -72,6 +77,7 @@ private:	// User declarations
    void __fastcall TForm1::PutIniData(TObject *Sender);
    void __fastcall TForm1::GetIniData(TObject *Sender);
    void __fastcall TForm1::DoAAVSO(TObject *Sender);
+   void __fastcall TForm1::DoAAVSO2(TObject *Sender);
    void __fastcall TForm1::DoSeqPlot(TObject *Sender);
    float __fastcall TForm1::ErrorComp(float err1, float err2);
    void __fastcall TForm1::ReDo(TObject *Sender, unsigned int num, int* comps);
@@ -81,6 +87,8 @@ private:	// User declarations
 public:		// User declarations
    __fastcall TForm1(TComponent* Owner);
    bool __fastcall TForm1::httpGet(AnsiString URL, char* buffer, int bufsize);
+   void __fastcall TForm1::outputReport(TObject *Sender);
+
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;

@@ -33,12 +33,15 @@
 #pragma package(smart_init)
 #pragma link "ElastFrm"
 #pragma link "HttpProt"
-#pragma link "HttpProt"
+#pragma link "LibXmlComps"
+#pragma link "LibXmlParser"
 #pragma resource "*.dfm"
 TForm1 *Form1;
 
-#define Version 21
+#define Version 22
 /* add to PClog.php
+   22
+   - use new VSP API for AAVSO data
    21
    - tidy up httpGet
 */
@@ -54,29 +57,292 @@ typedef struct {
    char mag[16];
    char sd[16];
 } filterData;
+filterData fDzero= { "0.000", "0.000" };
 
 typedef struct {
    char AUID[20];
-   char RA[32];
-   char Dec[32];
+   char RA[32];   // decimal string
+   char Dec[32];  // decimal string
    char Label[16];
-   filterData f[MaxFilters];
+   filterData f[MaxFilters]; // in the order of pdata.Filters
 } compData;
 
 typedef struct {
    char SName[80];
    char SRA[32];
    char SDec[32];
-   char Filters[MaxFilters];
+   char Filters[MaxFilters]; // master list and order. Single letter designation
    char Chart[16];
-   int  NumStars;
+   int  NumStars;  // ie comps
    compData comp[MaxComps];
 } pdata;
 
 pdata pd;
 
+double __fastcall hhmmss2degrees(char *z) {
+   double h, m, s, r;
+   // it might already be in degrees
+   //if(1== sscanf(z, "%lf", &r))
+      //return r;
+   if(3==sscanf(z, "%lf:%lf:%lf", &h, &m, &s))
+      return  15.0 * ((s/60.0+ m)/60.0 + h);
+   else
+      return h;
+}
+
+double __fastcall ddmmss2degrees(char* z) {
+   double d, m, s, r;
+   bool neg;
+   // it might already be in degrees
+//   if(1== sscanf(z, "%lf", &r))
+//      return r;
+   neg= z[0]=='-';
+   if(neg) z[0]= ' ';
+   if(3==sscanf(z, "%lf:%lf:%lf", &d, &m, &s)) {
+      r= ((s/60.0+ m)/60.0 + d);
+      if(neg) r*= -1.0;
+      return r;
+   } else
+      return d;
+}
+
+
 AnsiString SaveFile= "temp";
 AnsiString SourceFile= "";
+
+void __fastcall TForm1::DoAAVSO2(TObject *Sender)
+{
+    char cp[100000];
+    char suffix[3], ss[32];
+    float fx;
+/* This parser is designed to collect data for the AIPWin STAR file.
+    - single letter filter names (use first letter offered. eg Ic is I)
+    - no filter data has mag==0, err==0
+
+*/
+
+    pd.NumStars= 0;
+    pd.Filters[0]= 0;
+    Memo2->Clear(); // AIP STAR fmt
+
+    // get data from API by chartID
+    // new API call
+    AnsiString u= "http://www.aavso.org/apps/vsp/api/chart/"+ chartEdit->Text+ "/?format=xml";
+    //if(Form1->UseStdField->Checked) u+= "&special=std_field";
+    // eg   http://www.aavso.org/apps/vsp/api/chart/2164EAF/?format=xml
+    if(!Form1->httpGet(u, cp, sizeof(cp))) {
+       Memo2->Lines->Append(" failed VSP API chart request.");
+       return;
+    }
+    // cp not big enough?
+//          FILE * tf= fopen("testing.txt", "wt");
+//          fwrite(cp, 1, strlen(cp), tf);
+//          fclose(tf);
+    EasyXmlScanner1->LoadFromBuffer(cp);
+    EasyXmlScanner1->XmlParser->Normalize= true;
+    EasyXmlScanner1->XmlParser->StartScan();
+    int listLevel= 0, i, j, k;
+    AnsiString band, mag, Err;
+    compData cd;
+    filterData fd;
+    char f; char *cptr= NULL;
+    AnsiString CurName, CurContent, ChartID;
+    while (EasyXmlScanner1->XmlParser->Scan()) {
+       CurName= EasyXmlScanner1->XmlParser->CurName;
+       CurContent= EasyXmlScanner1->XmlParser->CurContent;
+       switch(EasyXmlScanner1->XmlParser->CurPartType) {
+          case ptStartTag:
+             if(CurName == "list-item") {
+                listLevel+= 1;
+                // prep for collecting data from the list item
+                switch(listLevel) {
+                   case 1: // photometry. Clean the cd
+                      cd.AUID[0]= 0;
+                      cd.RA[0]= 0;
+                      cd.Dec[0]= 0;
+                      cd.Label[0]= 0;
+                      for(int i= 0; i< MaxFilters; i++) cd.f[i]= fDzero;
+                      break;
+                   case 2: // band
+                      band= ""; mag= "0.000"; Err= "0.000";
+                      break;
+                }
+             }
+             break;
+
+          case ptContent:
+             switch(listLevel) {
+                case 0: // root
+                   //<comment/>
+                   if(CurName == "star") { //<star>RR And</star>
+                      strcpy(pd.SName, CurContent.c_str());
+                   }
+                   //<maglimit>16.0</maglimit>
+                   //<special/>
+                   //<auid>000-BBC-124</auid>
+                   //<fov>30.0</fov>
+                   else if(CurName == "dec") { //<dec>24:59:55.9</dec> nb not RR And
+                      sprintf(pd.SDec, "%.5f", ddmmss2degrees(CurContent.c_str()));
+                   }
+                   //<title/>
+                   //<dss>False</dss>
+                   else if(CurName == "chartid") { //<chartid>X15267EM</chartid>
+                      strcpy(pd.Chart, CurContent.c_str());
+                   }
+                   //<image_uri>https://www.aavso.org/apps/vsp/chart/X15267EM.png</image_uri>
+                   else if(CurName == "ra") { //<ra>21:44:39.68</ra> nb not RR And
+                      sprintf(pd.SRA, "%.5f", hhmmss2degrees(CurContent.c_str()));
+                   }
+                   //<resolution>100</resolution>
+                   //<photometry> list
+                   break; // root
+                case 1: // photometry
+                   if(CurName == "auid") { //<auid>000-BBC-116</auid>
+                      strcpy(cd.AUID, CurContent.c_str());
+                   }
+                   //<bands> list
+                   //<comments/>
+                   else if(CurName == "label") { //<label>94</label>
+                      strcpy(cd.Label, CurContent.c_str());
+                   }
+                   else if(CurName == "ra") { //<ra>00:51:10.69</ra>
+                      sprintf(cd.RA, "%.5f", hhmmss2degrees(CurContent.c_str()));
+                   }
+                   else if(CurName == "dec") { //<dec>34:16:27.3</dec>
+                      sprintf(cd.Dec, "%.5f", ddmmss2degrees(CurContent.c_str()));
+                   }
+                   break;
+                case 2: // bands
+                   if(CurName == "band") band= CurContent; //<band>V</band>
+                   else if(CurName == "mag") mag= CurContent; //<mag>9.384</mag>
+                   else if(CurName == "error") Err= CurContent; //<error>0.082</error>
+                   break;
+             }
+             break;
+
+          case ptEndTag:
+             if(CurName == "list-item") {
+                // use the data collected the list item
+                switch(listLevel) {
+                   case 2: // band
+                      cptr= strchr(pd.Filters, band.c_str()[0]); // nb, just first letter of filter name
+                      if(cptr==NULL) { // new filter?
+                         j= strlen(pd.Filters);
+                         pd.Filters[j]= band.c_str()[0];
+                         pd.Filters[j+1]= 0;
+                      } else
+                         j= cptr - pd.Filters;
+                      //strcpy(fd.mag, mag.c_str());
+                      sscanf(mag.c_str(), "%f", &fx);
+                      sprintf(fd.mag, "%.3f", fx);
+                      //strcpy(fd.sd, Err.c_str());
+                      sscanf(Err.c_str(), "%f", &fx);
+                      sprintf(fd.sd, "%.3f", fx);
+                      cd.f[j]= fd;
+                      break;
+                   case 1: // photometry
+                      pd.comp[pd.NumStars++]= cd;
+                      break;
+                }
+                listLevel-= 1;
+             }
+             break;
+       }
+    } //end while
+
+    // fixups
+    // look for duplicate Labels and modify with letter suffix
+    for(i= 0; i< pd.NumStars-1; i++) { // don't need to do the last one
+       strcpy(suffix, "a");
+       for(j= i+1; j< pd.NumStars; j++) {
+          if(!strcmp(pd.comp[i].Label, pd.comp[j].Label)) {
+             suffix[0]++;
+             strcat(pd.comp[j].Label, suffix);
+          }
+       }
+       if(strcmp(suffix, "a")) { // go fix the first
+          strcat(pd.comp[i].Label, "a");
+       }
+    }
+    // Label option
+    if(Labels1->Checked) {
+       for(i= 0; i<pd.NumStars; i++) {
+          //strcpy(ss, pd.comp[i].AUID);
+          //sprintf(pd.comp[i].AUID, "C%s %s", pd.comp[i].Label, ss);
+          sprintf(pd.comp[i].AUID, "C%s", pd.comp[i].Label);
+       }
+    }
+
+    outputReport(Sender);
+}
+
+void __fastcall TForm1::outputReport(TObject *Sender)
+{   // output data in pd
+
+    // Clear output
+    AnsiString ss;
+    Memo2->Clear(); // AIP STAR fmt
+    Memo4->Clear(); // CSV generic
+    int Stars= 0;
+
+    Memo2->Lines->Append("FILETYPE=             STARDATA /Star Data file                                ");
+    Memo2->Lines->Append("NUMTARGS=                    1 /Number of targets                             ");
+    Memo2->Lines->Append(ss.sprintf("NUMSTARS=                  %3i /Number of comp or field stars                 ", pd.NumStars));
+    Memo2->Lines->Append(ss.sprintf("NUMFILTE=                  %3i /Number of filter bands                        ", strlen(pd.Filters)));
+    for(int i= 0; i< (signed)strlen(pd.Filters); i++) {
+       Memo2->Lines->Append(ss.sprintf("FILTER%02i=                    %c /Designation of filter band                    ", i+1 , pd.Filters[i]));
+    }
+    Memo2->Lines->Append(ss.sprintf("CHARTDES=%21s /Chart designation                             ", pd.Chart));
+    Memo2->Lines->Append("--------=                      /                                              ");
+
+    Memo2->Lines->Append("T001FN  =                    V /Target function                               ");
+    ss.sprintf("T001ID  =%21s /Target identifier                             ", pd.SName);
+    ss[78]= 0; // make sure its not too long
+    Memo2->Lines->Append(ss);
+    Memo2->Lines->Append(ss.sprintf("T001RA  =%21s /Target RA                                     ", pd.SRA));
+    Memo2->Lines->Append(ss.sprintf("T001DC  =%21s /Target DEC                                    ", pd.SDec));
+
+    for(Stars= 0; Stars < pd.NumStars; Stars++) {
+       Memo2->Lines->Append("--------=                      /                                              ");
+       Memo2->Lines->Append(ss.sprintf("S%03iFN  =                    C /Star function                                 ", Stars+1));
+       Memo2->Lines->Append(ss.sprintf("S%03iID  =%21s /Star identifier                               ", Stars+1, pd.comp[Stars].AUID));
+       Memo2->Lines->Append(ss.sprintf("S%03iRA  =%21s /RA                                            ", Stars+1, pd.comp[Stars].RA));
+       Memo2->Lines->Append(ss.sprintf("S%03iDC  =%21s /DC                                            ", Stars+1, pd.comp[Stars].Dec));
+       Memo2->Lines->Append(ss.sprintf("S%03iLab =%21s /Label                                         ", Stars+1, pd.comp[Stars].Label));
+       for(unsigned int Fs= 0; Fs<strlen(pd.Filters); Fs++) {
+          Memo2->Lines->Append(ss.sprintf("S%03iF%02iM=%21s /%c standard magnitude                          ", Stars+1, Fs+1, pd.comp[Stars].f[Fs].mag, pd.Filters[Fs]));
+          Memo2->Lines->Append(ss.sprintf("S%03iF%02iS=%21s /%c std dev                                     ", Stars+1, Fs+1, pd.comp[Stars].f[Fs].sd, pd.Filters[Fs]));
+       }
+    }
+    Memo2->Lines->Append("END                                                                           ");
+
+    // CSV report
+    char cs[256], ss2[256];
+    sprintf(cs, "\"Starname\",\"%s\"", pd.SName);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"Star RA\",\"%s\"", pd.SRA);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"Star DEC\",\"%s\"", pd.SDec);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"ChartID\",\"%s\"", pd.Chart);
+    Memo4->Lines->Append(cs);
+    sprintf(cs, "\"AUID\",\"RA\",\"Dec\",\"Label\"");
+    for(unsigned int i= 0; i<strlen(pd.Filters); i++) {
+       sprintf(ss2, ",\"%c\",", pd.Filters[i]); // 2 cols: mag and err
+       strcat(cs, ss2);
+    }
+    Memo4->Lines->Append(cs);
+    for(Stars= 0; Stars < pd.NumStars; Stars++) {
+       sprintf(cs, "%s, %s, %s, %s", pd.comp[Stars].AUID, pd.comp[Stars].RA, pd.comp[Stars].Dec, pd.comp[Stars].Label);
+       for(unsigned int i= 0; i<strlen(pd.Filters); i++) {
+          sprintf(ss2, ", %s, %s", pd.comp[Stars].f[i].mag, pd.comp[Stars].f[i].sd ); // 2 cols: mag and err
+          strcat(cs, ss2);
+       }
+       Memo4->Lines->Append(cs);
+    }
+
+}
+
 
 
 void __fastcall TForm1::DoAAVSO(TObject *Sender)
@@ -87,9 +353,6 @@ void __fastcall TForm1::DoAAVSO(TObject *Sender)
     unsigned int BmVcol= 999, BmVcolTmp; // filter column labeled B-V; This needs to be skipped
     unsigned int i, j, Fs, Stars;
 
-    // Clear output
-    Memo2->Clear(); // AIP STAR fmt
-    Memo4->Clear(); // CSV generic
 
     Memo1->SelectAll();
     char *M0= Memo1->Lines->GetText();
@@ -516,7 +779,8 @@ void __fastcall TForm1::DoitButtonClick(TObject *Sender)
     if(SeqPlot1->Checked) {
        DoSeqPlot(Sender);
     } else {
-       DoAAVSO(Sender);
+       //DoAAVSO(Sender);
+       DoAAVSO2(Sender);
     }
 }
 //---------------------------------------------------------------------------
@@ -546,7 +810,33 @@ void __fastcall TForm1::Help1Click(TObject *Sender)
 void __fastcall TForm1::Labels1Click(TObject *Sender)
 {
     Labels1->Checked= Labels1->Checked? false: true;
-    PutIniData(Sender);
+/* from SDG (?)
+   // collect INI file entries
+   TIniFile *ini;
+   if(0==INIfilename.Length()) { // first time
+      INIfilename= ChangeFileExt( Application->ExeName, ".INI");
+      ini= new TIniFile(INIfilename);
+      INIfilename= ini->ReadString("Setup", "INI", INIfilename); // allows changing the INIfilename some day
+      delete ini;
+   }
+   ini = new TIniFile(INIfilename);
+
+   OpenDialog1->FilterIndex= ini->ReadInteger("Setup", "FilterIndex", 2); // default to all
+   dataDir= ini->ReadString("Setup", "dataDir", "");
+   observerEdit->Text= ini->ReadString("Setup", "Observer", "");
+   Label4->Caption= reportDir= ini->ReadString("Setup", "reportDir", "");
+   reportFile= ini->ReadString("Setup", "reportFile", "None");
+   reportByMonth->Checked= ini->ReadBool("Setup", "reportByMonth", false);
+   lastFile= ini->ReadString("Setup", "lastFile", "");
+   lastFileLabel->Caption= lastFile;
+   openReportFile(Sender, false);
+   lt= ini->ReadInteger("Setup", "LogType", 0); // default to SuperSid
+   LogTypes[lt]->Checked= true;
+   freqEdit->Text= Frequency= ini->ReadString("Setup", "lastFrequency", 0);
+   stationEdit->Text= StationID= ini->ReadString("Setup", "lastStation", "   ");
+   delete ini;
+*/
+   PutIniData(Sender);
 }
 //---------------------------------------------------------------------------
 
@@ -620,11 +910,20 @@ void __fastcall TForm1::GetIniData(TObject *Sender)
    }
 
    if(SeqPlot1->Checked) {
+
       Label2->Caption= "Paste SeqPlot data here";
+      Label2->Visible= true;
+      Memo1->Visible= true;
       SPaltError->Visible= true;
+      chartMsg->Visible= false;
+      chartEdit->Visible= false;
    } else {
       Label2->Caption= "Paste AAVSO photometry data here";
       SPaltError->Visible= false;
+      Label2->Visible= false;
+      Memo1->Visible= false;
+      chartMsg->Visible= true;
+      chartEdit->Visible= true;
    }
 
 }
@@ -846,6 +1145,8 @@ void __fastcall TForm1::DoSeqPlot(TObject *Sender)
 
 }
 //---------------------------------------------------------------------------
+
+
 
 float __fastcall TForm1::ErrorComp(float err1, float err2) {
       // err1 the combined error term

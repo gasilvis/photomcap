@@ -9,8 +9,8 @@
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) Unit1.dfm aboutbox.dfm helpBox.dfm"/>
     <LIBFILES value=""/>
-    <LIBRARIES value="IcsBcb50.lib Vcl50.lib"/>
-    <SPARELIBS value="Vcl50.lib IcsBcb50.lib"/>
+    <LIBRARIES value="XmlParser.lib IcsBcb50.lib Vcl50.lib"/>
+    <SPARELIBS value="Vcl50.lib IcsBcb50.lib XmlParser.lib"/>
     <PACKAGES value="Vcl50.bpi Vclx50.bpi A303_R51.bpi bcb2kaxserver50.bpi bcbie50.bpi 
       bcbsmp50.bpi Inet50.bpi Inetdb50.bpi Vclbde50.bpi Vcldb50.bpi vcldbx50.bpi 
       VCLIB50.bpi vclie50.bpi NMFast50.bpi dclocx50.bpi Qrpt50.bpi TeeUI50.bpi 
@@ -25,8 +25,8 @@
     <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="PhotomCap.cpp"/>
-    <INCLUDEPATH value="&quot;C:\Program Files (x86)\Borland\CBuilder5\Bin\&quot;;$(BCB)\include;$(BCB)\include\vcl;$(BCB)\ICS\Delphi\Vc32"/>
-    <LIBPATH value="$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Bin\&quot;;$(BCB)\APRO;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="$(BCB)\xmlparser;&quot;C:\Program Files (x86)\Borland\CBuilder5\Bin\&quot;;$(BCB)\include;$(BCB)\include\vcl;$(BCB)\ICS\Delphi\Vc32"/>
+    <LIBPATH value="$(BCB)\xmlparser;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Bin\&quot;;$(BCB)\APRO;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
   </MACROS>
   <OPTIONS>

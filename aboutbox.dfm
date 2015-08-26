@@ -124,19 +124,6 @@ object fAbout: TfAbout
       Font.Style = [fsBold]
       ParentFont = False
     end
-    object Label6: TLabel
-      Left = 48
-      Top = 128
-      Width = 360
-      Height = 16
-      Caption = 'http://www.gasilvis.com/PhotomCap/PhotomCap.exe'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'MS Sans Serif'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
   end
   object Button1: TButton
     Left = 174

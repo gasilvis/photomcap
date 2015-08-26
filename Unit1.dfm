@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 378
-  Top = 162
+  Left = 381
+  Top = 199
   Width = 979
   Height = 563
   HorzScrollBar.Visible = False
@@ -41,11 +41,18 @@ object Form1: TForm1
     Caption = '           '
     OnClick = versionLabelClick
   end
+  object chartMsg: TLabel
+    Left = 384
+    Top = 96
+    Width = 162
+    Height = 23
+    Caption = 'Enter chartID here'
+  end
   object Memo2: TMemo
     Left = 144
     Top = 256
     Width = 817
-    Height = 233
+    Height = 225
     Hint = 'Here will appear the .photometry data in STAR format'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
@@ -77,7 +84,7 @@ object Form1: TForm1
     Left = 144
     Top = 256
     Width = 817
-    Height = 233
+    Height = 225
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -17
@@ -172,6 +179,13 @@ object Form1: TForm1
       OnClick = ReDoButtonClick
     end
   end
+  object chartEdit: TEdit
+    Left = 560
+    Top = 88
+    Width = 121
+    Height = 31
+    TabOrder = 9
+  end
   object SaveDialog1: TSaveDialog
     Left = 88
     Top = 448
@@ -184,8 +198,8 @@ object Form1: TForm1
     DesignFormHeight = 563
     DesignFormClientWidth = 971
     DesignFormClientHeight = 505
-    DesignFormLeft = 378
-    DesignFormTop = 162
+    DesignFormLeft = 381
+    DesignFormTop = 199
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -20
@@ -274,5 +288,10 @@ object Form1: TForm1
     SocksAuthentication = socksNoAuthentication
     Left = 936
     Top = 8
+  end
+  object EasyXmlScanner1: TEasyXmlScanner
+    Normalize = True
+    Left = 956
+    Top = 552
   end
 end
