@@ -38,8 +38,10 @@
 #pragma resource "*.dfm"
 TForm1 *Form1;
 
-#define Version 23
+#define Version 24
 /* add to PClog.php
+   24  error in sexigesimal to decimal
+   23  glitched output line length
    22
    - use new VSP API for AAVSO data
    21
@@ -81,29 +83,24 @@ pdata pd;
 
 double __fastcall hhmmss2degrees(char *z) {
    double h, m, s, r;
-   // it might already be in degrees
-   //if(1== sscanf(z, "%lf", &r))
-      //return r;
    if(3==sscanf(z, "%lf:%lf:%lf", &h, &m, &s))
-      return  15.0 * ((s/60.0+ m)/60.0 + h);
-   else
-      return h;
+      r= 15.0 * ((s/60.0+ m)/60.0 + h); // deg
+   else // it was in decimal degrees
+      r= h;
+   return r;
 }
 
 double __fastcall ddmmss2degrees(char* z) {
    double d, m, s, r;
    bool neg;
-   // it might already be in degrees
-//   if(1== sscanf(z, "%lf", &r))
-//      return r;
    neg= z[0]=='-';
    if(neg) z[0]= ' ';
-   if(3==sscanf(z, "%lf:%lf:%lf", &d, &m, &s)) {
+   if(3==sscanf(z, "%lf:%lf:%lf", &d, &m, &s))
       r= ((s/60.0+ m)/60.0 + d);
-      if(neg) r*= -1.0;
-      return r;
-   } else
-      return d;
+   else // it was in decimal degrees
+      r= d;
+   if(neg) r*= -1.0;
+   return r;
 }
 
 
