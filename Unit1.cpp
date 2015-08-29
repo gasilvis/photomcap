@@ -38,7 +38,7 @@
 #pragma resource "*.dfm"
 TForm1 *Form1;
 
-#define Version 22
+#define Version 23
 /* add to PClog.php
    22
    - use new VSP API for AAVSO data
@@ -297,7 +297,7 @@ void __fastcall TForm1::outputReport(TObject *Sender)
 
     Memo2->Lines->Append("T001FN  =                    V /Target function                               ");
     ss.sprintf("T001ID  =%21s /Target identifier                             ", pd.SName);
-    ss[78]= 0; // make sure its not too long
+    if(ss.Length()>78) ss[79]= 0;
     Memo2->Lines->Append(ss);
     Memo2->Lines->Append(ss.sprintf("T001RA  =%21s /Target RA                                     ", pd.SRA));
     Memo2->Lines->Append(ss.sprintf("T001DC  =%21s /Target DEC                                    ", pd.SDec));
