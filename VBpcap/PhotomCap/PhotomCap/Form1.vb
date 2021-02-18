@@ -5,7 +5,7 @@ Imports System.Web
 
 Public Class Form1
 
-    Public version As String = "25"
+    Public version As String = "26"
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ReDim pd.comp(MaxComps - 1)
@@ -21,10 +21,14 @@ Public Class Form1
     ' Menu items
 
     Private Sub SaveResultFile1_Click(sender As Object, e As EventArgs) Handles SaveResultFile1.Click
-        SaveFileDialog1.Filter = "STAR Files (*.star*)|*.star"
+        If CSV1.Checked Then
+            SaveFileDialog1.Filter = "CSV Files (*.csv*)|*.csv"
+        Else
+            SaveFileDialog1.Filter = "STAR Files (*.star*)|*.star"
+        End If
         SaveFileDialog1.InitialDirectory = My.Settings.SaveDir
         If SaveFileDialog1.ShowDialog = Windows.Forms.DialogResult.OK Then
-            My.Computer.FileSystem.WriteAllText(SaveFileDialog1.FileName, Memo2.Text, True)
+            My.Computer.FileSystem.WriteAllText(SaveFileDialog1.FileName, Memo2.Text, False)
             Dim sPath As String = SaveFileDialog1.FileName 'get the path
             sPath = StrReverse(sPath) 'reverse the string
             sPath = Mid(sPath, InStr(sPath, "\"), Len(sPath)) 'extract from the first slash
